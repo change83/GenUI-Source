@@ -1,267 +1,158 @@
 # GenUI Components
 
-A compact component library for generated interfaces.
+This folder is intentionally structured for the GenUI Source reader: **one JavaScript file equals one component**. Every component directly extends `HTMLElement`, declares `observedAttributes`, defines a visible default render, registers one custom element, and exports that class as default. This lets Source extract props and compile a live preview from the same file.
 
-This folder is intentionally small and explicit: one readable component contract (`Components.md`), one browser implementation (`components.js`), and one SCSS source (`components.scss`). The structure is inspired by Carbon's separation of component documentation, behavior, and styles, but the implementation here is purpose-built for GenUI.
-
-## Why this shape
-
-GenUI needs component definitions that are:
-
-- **Human-readable** — a designer can understand what a component is for without reading source.
-- **Agent-readable** — names, props, states, and selection rules are explicit and stable.
-- **Executable** — the JS registers real custom elements.
-- **Token-driven** — SCSS consumes only design tokens from `../Design/tokens.scss`.
-- **Small by default** — use common components first; add new components only when repeated product needs justify them.
-
-## Usage
-
-```js
-import { registerGenUIComponents } from './Components/components.js';
-
-registerGenUIComponents();
-```
-
-Compile `Components/components.scss` together with `Design/tokens.scss`, then load the resulting CSS globally.
-
-```html
-<ui-button variant="primary">Continue</ui-button>
-
-<ui-text-input
-  label="Project name"
-  placeholder="Untitled project">
-</ui-text-input>
-```
+The library keeps only common UI building blocks. Visual values are token-driven from `../tokens/`.
 
 ## Generation rules
 
-1. **Reuse before creating.** Choose an existing component when it can express the interaction without custom structure.
-2. **Do not invent props.** Only use attributes documented in the catalog below.
-3. **Prefer semantic variants.** Use `primary`, `secondary`, `danger`, `success`, `warning`, `info`, and `neutral` instead of raw colors.
-4. **One primary action per local task.** Additional actions should normally be secondary or ghost.
-5. **State must be explicit.** Disabled, error, selected, loading, and open states must come from component attributes rather than visual imitation.
-6. **Use native meaning.** Buttons trigger actions, links navigate, checkboxes allow independent selections, radios choose one option, toggles change an immediate binary setting.
-7. **Keep generated UI concise.** Prefer fewer components with clearer grouping over deeply nested surfaces.
-8. **Accessibility is part of the contract.** Interactive controls require visible labels or an `aria-label`; focus must never be removed.
-9. **No raw visual values in component markup.** Color, spacing, radius, typography, motion, and elevation come from Design tokens.
-10. **Escalate only when necessary.** A bespoke component is justified when the same new interaction pattern appears repeatedly and cannot be composed safely from the catalog.
-
-## Common component catalog
-
-| Component | Element | Use for | Key attributes |
-|---|---|---|---|
-| Button | `ui-button` | Primary and secondary actions | `variant`, `size`, `disabled`, `full`, `type` |
-| Icon button | `ui-icon-button` | Compact icon-only action | `label`, `variant`, `size`, `disabled` |
-| Card | `ui-card` | Grouping related content | `heading`, `subheading`, `elevated`, `interactive` |
-| Text input | `ui-text-input` | Single-line text entry | `label`, `value`, `placeholder`, `type`, `helper`, `error`, `disabled`, `name` |
-| Textarea | `ui-textarea` | Multi-line text entry | `label`, `value`, `placeholder`, `rows`, `helper`, `error`, `disabled`, `name` |
-| Select | `ui-select` | Choosing one item from a compact list | `label`, `options`, `value`, `placeholder`, `error`, `disabled`, `name` |
-| Checkbox | `ui-checkbox` | Independent on/off selection | `label`, `checked`, `disabled`, `name`, `value` |
-| Radio | `ui-radio` | One choice in a named group | `label`, `checked`, `disabled`, `name`, `value` |
-| Toggle | `ui-toggle` | Immediate binary setting | `label`, `checked`, `disabled`, `name` |
-| Search | `ui-search` | Search/filter input | `label`, `value`, `placeholder`, `disabled` |
-| Tag | `ui-tag` | Compact category/status label | `kind`, `size`, `dismissible` |
-| Alert | `ui-alert` | Contextual inline feedback | `kind`, `title`, `dismissible` |
-| Tabs | `ui-tabs` | Switching peer views | `items`, `active` |
-| Accordion | `ui-accordion` | Progressive disclosure | `items`, `multiple` |
-| Modal | `ui-modal` | Blocking confirmation or focused task | `heading`, `open`, `size`, `dismissible` |
-| Tooltip | `ui-tooltip` | Short supplementary explanation | `label`, `position` |
-| Pagination | `ui-pagination` | Paging a known result set | `page`, `page-size`, `total` |
-| Progress | `ui-progress` | Known completion progress | `value`, `label` |
-| Skeleton | `ui-skeleton` | Loading placeholder | `type`, `lines` |
-| Toast | `ui-toast` | Brief non-blocking outcome | `kind`, `message`, `duration` |
-
-## Component contracts
-
-### Button
-
-Use for explicit actions such as save, continue, submit, retry, or delete.
-
-```html
-<ui-button variant="primary" size="md">Save changes</ui-button>
-<ui-button variant="danger">Delete</ui-button>
-```
-
-- Variants: `primary`, `secondary`, `ghost`, `danger`
-- Sizes: `sm`, `md`, `lg`
-- Use `full` only when the container is narrow or a single dominant action needs full width.
-- Do not use a button to navigate to a new URL.
-
-### Icon button
-
-Use when the icon meaning is standard and space is constrained.
-
-```html
-<ui-icon-button label="Close">×</ui-icon-button>
-```
-
-- `label` is required and becomes the accessible name.
-- Do not use an unlabeled icon-only action.
-
-### Card
-
-Use to group related content into one surface. Keep hierarchy shallow.
-
-```html
-<ui-card heading="Revenue" subheading="Last 30 days" elevated>
-  <strong>$128K</strong>
-</ui-card>
-```
-
-- `elevated` adds separation from the background.
-- `interactive` is for a card that behaves as one click target; do not place nested interactive controls inside it.
-
-### Text input / Textarea
-
-Use a visible label whenever possible. Use helper text for guidance and `error` for validation.
-
-```html
-<ui-text-input label="Email" type="email" error="Enter a valid email"></ui-text-input>
-```
-
-Events: `input`, `change`.
-
-### Select
-
-`options` is a JSON array. Use a select for a short, known list.
-
-```html
-<ui-select
-  label="Status"
-  value="active"
-  options='[{"label":"Active","value":"active"},{"label":"Paused","value":"paused"}]'>
-</ui-select>
-```
-
-Event: `change`.
-
-### Checkbox / Radio / Toggle
-
-- Checkbox: independent choices.
-- Radio: exactly one choice within the same `name`.
-- Toggle: immediate setting change; avoid using it for a multi-step submit flow.
-
-Events: `change`.
-
-### Search
-
-Use for find/filter behavior, not for arbitrary single-line data entry.
-
-```html
-<ui-search placeholder="Search projects"></ui-search>
-```
-
-Event: `input`.
-
-### Tag
-
-Use for compact metadata, status, or applied filter chips.
-
-- Kinds: `neutral`, `info`, `success`, `warning`, `danger`
-- A dismissible tag emits `dismiss`.
-
-### Alert
-
-Use for information that should remain visible in context.
-
-- Kinds: `info`, `success`, `warning`, `danger`
-- A dismissible alert emits `dismiss`.
-- Critical destructive confirmation belongs in a modal, not an alert.
-
-### Tabs
-
-`items` is JSON:
-
-```html
-<ui-tabs
-  active="0"
-  items='[{"label":"Overview","value":"overview"},{"label":"Activity","value":"activity"}]'>
-</ui-tabs>
-```
-
-Event: `change` with `detail: { index, value }`.
-
-Use tabs only for peer views. Do not use them to represent sequential steps.
-
-### Accordion
-
-`items` is JSON:
-
-```html
-<ui-accordion
-  items='[
-    {"title":"Details","content":"Project details"},
-    {"title":"Permissions","content":"Access settings"}
-  ]'>
-</ui-accordion>
-```
-
-Event: `toggle` with `detail: { index, open }`.
-
-### Modal
-
-Use for blocking decisions or short focused tasks.
-
-```html
-<ui-modal heading="Delete project" open>
-  This cannot be undone.
-</ui-modal>
-```
-
-Event: `close`.
-
-- Sizes: `sm`, `md`, `lg`
-- Escape and backdrop click close a dismissible modal.
-- Avoid long documents or complex navigation inside a modal.
-
-### Tooltip
-
-Use for short supplemental help. The main meaning of a control must remain understandable without it.
-
-### Pagination
-
-Event: `change` with `detail: { page, pageSize }`.
-
-Prefer progressive loading when the total is unknown; use pagination when users need stable page boundaries.
-
-### Progress / Skeleton
-
-- `ui-progress`: known numeric progress from `0` to `100`.
-- `ui-skeleton`: unknown loading duration.
-
-Do not show a fake percentage when the system cannot estimate completion.
-
-### Toast
-
-Use for transient success/info/warning/error outcomes that do not require blocking action.
-
-Event: `dismiss`.
-
-## GenUI selection hints
-
-| Intent | Preferred component |
-|---|---|
-| Do something | Button |
-| Choose one from several visible options | Radio |
-| Choose zero or more | Checkbox |
-| Change a binary setting immediately | Toggle |
-| Choose one from a compact list | Select |
-| Enter short text | Text input |
-| Enter long text | Textarea |
-| Filter/find | Search |
-| Group related content | Card |
-| Switch peer views | Tabs |
-| Reveal optional detail | Accordion |
-| Persistent contextual feedback | Alert |
-| Blocking confirmation | Modal |
-| Short transient outcome | Toast |
-| Loading, duration unknown | Skeleton |
-| Loading, completion known | Progress |
-
-## Stable API rule
-
-Attributes, events, and element names in this document are the public GenUI contract. A breaking rename should be treated as a versioned design-system change, not an incidental refactor.
-
-## Carbon reference
-
-Carbon is used as an architectural reference for separation of documentation, implementation, tokens, accessibility, and componentized SCSS. This repository does **not** vendor Carbon source code and intentionally keeps only a common GenUI subset.
+1. Reuse an existing component before inventing markup.
+2. Do not invent attributes that are not listed below.
+3. Use semantic variants (`primary`, `secondary`, `danger`, `success`, `warning`, `info`) rather than raw colors.
+4. Keep one primary action per local task.
+5. Prefer native interaction meaning: button = action, radio = one choice, checkbox = independent choices, toggle = immediate binary setting.
+6. Loading state: use progress only when completion is measurable; otherwise use skeleton.
+7. Use modal only for blocking decisions or short focused tasks.
+8. Component JS includes minimal Shadow DOM styles so Source can render it independently; `components.scss` provides the shared production bridge to design tokens.
+
+## Components
+
+### UIButton
+- Source: `Components/ui-button.js`
+- Kind: web-component `<ui-button>`
+- Summary: A button for explicit user actions with semantic variants and three sizes.
+- Use when: The user needs to save, continue, submit, retry, create, or delete.
+- Don't use when: The user is navigating to another destination; use a link/navigation pattern instead.
+- Props: `variant`, `size`, `disabled`, `full`, `type`
+
+### UICard
+- Source: `Components/ui-card.js`
+- Kind: web-component `<ui-card>`
+- Summary: A surface that groups related content into a scannable unit.
+- Use when: Content belongs together and benefits from a clear local hierarchy.
+- Don't use when: The card only adds decoration or creates unnecessary nesting.
+- Props: `heading`, `subheading`, `elevated`, `interactive`
+
+### UITextInput
+- Source: `Components/ui-text-input.js`
+- Kind: web-component `<ui-text-input>`
+- Summary: A labeled single-line text field with helper and error states.
+- Use when: Collecting names, email, identifiers, search-independent text, or other short values.
+- Don't use when: The value is long-form content; use textarea.
+- Props: `label`, `placeholder`, `type`, `value`, `helper`, `error`, `disabled`, `name`
+
+### UITextarea
+- Source: `Components/ui-textarea.js`
+- Kind: web-component `<ui-textarea>`
+- Summary: A labeled multi-line text field.
+- Use when: Collecting notes, descriptions, comments, or other long-form text.
+- Don't use when: A single line is sufficient; use text input.
+- Props: `label`, `placeholder`, `value`, `rows`, `helper`, `error`, `disabled`, `name`
+
+### UISelect
+- Source: `Components/ui-select.js`
+- Kind: web-component `<ui-select>`
+- Summary: A compact control for choosing one value from a known list.
+- Use when: The option list is known and does not need to stay visible.
+- Don't use when: Users need to compare a small set of choices side-by-side; use radios.
+- Props: `label`, `options`, `value`, `disabled`, `name`
+
+### UICheckbox
+- Source: `Components/ui-checkbox.js`
+- Kind: web-component `<ui-checkbox>`
+- Summary: An independent binary selection control.
+- Use when: Multiple options may be selected independently.
+- Don't use when: Exactly one option must be chosen; use radio.
+- Props: `label`, `checked`, `disabled`, `name`, `value`
+
+### UIRadio
+- Source: `Components/ui-radio.js`
+- Kind: web-component `<ui-radio>`
+- Summary: A single option within an exclusive choice group.
+- Use when: Exactly one of several visible options must be chosen.
+- Don't use when: Options are independent; use checkbox.
+- Props: `name`, `value`, `label`, `checked`, `disabled`
+
+### UIToggle
+- Source: `Components/ui-toggle.js`
+- Kind: web-component `<ui-toggle>`
+- Summary: An immediate on/off setting control.
+- Use when: Changing the switch should take effect immediately.
+- Don't use when: The value is part of a form submitted later; use checkbox.
+- Props: `label`, `checked`, `disabled`, `name`
+
+### UISearch
+- Source: `Components/ui-search.js`
+- Kind: web-component `<ui-search>`
+- Summary: A dedicated search/filter field.
+- Use when: Users need to find or filter items in the current context.
+- Don't use when: Collecting ordinary text data; use text input.
+- Props: `placeholder`, `value`, `disabled`, `label`
+
+### UIAlert
+- Source: `Components/ui-alert.js`
+- Kind: web-component `<ui-alert>`
+- Summary: Persistent contextual feedback with semantic status variants.
+- Use when: Information or an outcome should remain visible in context.
+- Don't use when: The message is transient and non-blocking; use toast.
+- Props: `variant`, `title`, `dismissible`
+
+### UITabs
+- Source: `Components/ui-tabs.js`
+- Kind: web-component `<ui-tabs>`
+- Summary: A peer-view switcher for a small number of related sections.
+- Use when: Views are peers and users may switch between them in any order.
+- Don't use when: The flow is sequential; use a step/progress pattern.
+- Props: `labels`, `selected`
+
+### UIAccordion
+- Source: `Components/ui-accordion.js`
+- Kind: web-component `<ui-accordion>`
+- Summary: A disclosure component for optional details.
+- Use when: Secondary content can be hidden until requested.
+- Don't use when: The content is required to complete the primary task.
+- Props: `label`, `open`, `disabled`
+
+### UIModal
+- Source: `Components/ui-modal.js`
+- Kind: web-component `<ui-modal>`
+- Summary: A blocking dialog for confirmation or a short focused task.
+- Use when: The user must resolve a decision before returning to the underlying UI.
+- Don't use when: Content is long, navigational, or non-blocking.
+- Props: `heading`, `open`, `size`, `dismissible`
+
+### UIPagination
+- Source: `Components/ui-pagination.js`
+- Kind: web-component `<ui-pagination>`
+- Summary: Page navigation for a known result set.
+- Use when: Stable page boundaries help lookup or comparison.
+- Don't use when: The total is unknown or continuous loading is a better fit.
+- Props: `page`, `total`
+
+### UIProgress
+- Source: `Components/ui-progress.js`
+- Kind: web-component `<ui-progress>`
+- Summary: A progress bar for measurable completion.
+- Use when: The system can estimate a real percentage.
+- Don't use when: Completion cannot be estimated; use skeleton.
+- Props: `value`, `label`, `variant`
+
+### UISkeleton
+- Source: `Components/ui-skeleton.js`
+- Kind: web-component `<ui-skeleton>`
+- Summary: A structural loading placeholder for unknown-duration loading.
+- Use when: Content shape is known but load completion is not.
+- Don't use when: A real percentage is available; use progress.
+- Props: `lines`, `width`, `height`, `circle`
+
+### UIToast
+- Source: `Components/ui-toast.js`
+- Kind: web-component `<ui-toast>`
+- Summary: Brief non-blocking outcome feedback.
+- Use when: Confirming a save, update, copy, or lightweight warning without interrupting work.
+- Don't use when: The message requires acknowledgment or persistent action.
+- Props: `variant`, `message`, `duration`
+
+## Design dependency
+
+Design tokens live in `../tokens/tokens.json`, with readable rules in `../tokens/Design.md` and runtime/SCSS representations in `../tokens/tokens.js` and `../tokens/tokens.scss`.
