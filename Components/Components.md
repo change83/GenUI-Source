@@ -1,114 +1,158 @@
-# Components.md — ustwo/basic-web
+# GenUI Components
 
-> **This file is an excerpt.** The published original is 28 components and ~35,000
-> characters — every component in `js/components` in the same shape as the six below.
-> It is included so you can see the format the tool produces; it is not loaded into the
-> app, and the app generates its own from whatever repo you point it at.
+This folder is intentionally structured for the GenUI Source reader: **one JavaScript file equals one component**. Every component directly extends `HTMLElement`, declares `observedAttributes`, defines a visible default render, registers one custom element, and exports that class as default. This lets Source extract props and compile a live preview from the same file.
 
-Generated 2026-08-28 by reading js/components in ustwo/basic-web on branch develop.
-Every file in that folder is a component by construction — the repo's own structure is the filter,
-so nothing was excluded here. Props are extracted from raw source, not from a manifest or a package.
-The three descriptive fields are drafted from source and reviewed by hand. Design tokens live in Design.md.
+The library keeps only common UI building blocks. Visual values are token-driven from `../tokens/`.
 
-- Components: 28
-- Props read from source: 107
-- Mount: each component is the default or named export of its own source file, compiled from that file
+## Generation rules
 
-## js/components
+1. Reuse an existing component before inventing markup.
+2. Do not invent attributes that are not listed below.
+3. Use semantic variants (`primary`, `secondary`, `danger`, `success`, `warning`, `info`) rather than raw colors.
+4. Keep one primary action per local task.
+5. Prefer native interaction meaning: button = action, radio = one choice, checkbox = independent choices, toggle = immediate binary setting.
+6. Loading state: use progress only when completion is measurable; otherwise use skeleton.
+7. Use modal only for blocking decisions or short focused tasks.
+8. Component JS includes minimal Shadow DOM styles so Source can render it independently; `components.scss` provides the shared production bridge to design tokens.
+
+## Components
 
 ### UIButton
-
-- Source: `js/components/ui-button.js` (line 6)
-- Kind: web-component `<ui-button>` · export `UIButton`
-- Summary: A customizable button web component that supports multiple visual variants, sizes, and states with native click event propagation.
-- Use when: You need a button for user interactions with configurable appearance through variants (primary, secondary, success, warning, danger, ghost, light) and sizes (sm, md, lg). Use when you need full-width layout control via the full attribute or disabled state management.
-- Don't use when: Do not use for toggle buttons or checkbox/radio-like behaviors; use a dedicated toggle component instead. Do not use when you need a link that navigates; use a link component instead.
-- Description source: AI draft from source — check it reads true
-- Props:
-  - `variant`: string — optional — default `primary` — read from observedAttributes
-  - `size`: string — optional — default `md` — read from observedAttributes
-  - `disabled`: boolean — optional — read from observedAttributes
-  - `full`: string — optional — read from observedAttributes
-  - `type`: string — optional — default `button` — read from observedAttributes
-- Doc comment in source: <ui-button variant="primary" size="md">Save changes</ui-button> Variants: primary, secondary, success, warning, danger, ghost, light. Sizes: sm, md, lg. Add the bare attribute "disabled" or "full" as needed. Fires a native "click" event (composed, so it bubbles out of the shadow root).
+- Source: `Components/ui-button.js`
+- Kind: web-component `<ui-button>`
+- Summary: A button for explicit user actions with semantic variants and three sizes.
+- Use when: The user needs to save, continue, submit, retry, create, or delete.
+- Don't use when: The user is navigating to another destination; use a link/navigation pattern instead.
+- Props: `variant`, `size`, `disabled`, `full`, `type`
 
 ### UICard
+- Source: `Components/ui-card.js`
+- Kind: web-component `<ui-card>`
+- Summary: A surface that groups related content into a scannable unit.
+- Use when: Content belongs together and benefits from a clear local hierarchy.
+- Don't use when: The card only adds decoration or creates unnecessary nesting.
+- Props: `heading`, `subheading`, `elevated`, `interactive`
 
-- Source: `js/components/ui-card.js` (line 5)
-- Kind: web-component `<ui-card>` · export `UICard`
-- Summary: A container component that displays content in a card with optional header and footer slots, supporting raised or flat elevation styles.
-- Use when: You need to group related content in a self-contained surface with clear visual hierarchy. Use it with the raised attribute for emphasis or flat for a minimal border-only appearance.
-- Don't use when: Do not use this component for full-page layouts or modal dialogs—use a dedicated layout or modal component instead. Do not use it when you need custom shadow or elevation states beyond raised and flat variants.
-- Description source: AI draft from source — check it reads true
-- Props:
-  - `raised`: string — optional — read from observedAttributes
-  - `flat`: string — optional — read from observedAttributes
-- Doc comment in source: <ui-card><span slot="header">Project status</span> Three tasks remain. <span slot="footer">Updated today</span></ui-card> Slots: default (body), header, footer. Add "raised" for a stronger shadow, or "flat" for a border-only card with no elevation.
+### UITextInput
+- Source: `Components/ui-text-input.js`
+- Kind: web-component `<ui-text-input>`
+- Summary: A labeled single-line text field with helper and error states.
+- Use when: Collecting names, email, identifiers, search-independent text, or other short values.
+- Don't use when: The value is long-form content; use textarea.
+- Props: `label`, `placeholder`, `type`, `value`, `helper`, `error`, `disabled`, `name`
+
+### UITextarea
+- Source: `Components/ui-textarea.js`
+- Kind: web-component `<ui-textarea>`
+- Summary: A labeled multi-line text field.
+- Use when: Collecting notes, descriptions, comments, or other long-form text.
+- Don't use when: A single line is sufficient; use text input.
+- Props: `label`, `placeholder`, `value`, `rows`, `helper`, `error`, `disabled`, `name`
+
+### UISelect
+- Source: `Components/ui-select.js`
+- Kind: web-component `<ui-select>`
+- Summary: A compact control for choosing one value from a known list.
+- Use when: The option list is known and does not need to stay visible.
+- Don't use when: Users need to compare a small set of choices side-by-side; use radios.
+- Props: `label`, `options`, `value`, `disabled`, `name`
+
+### UICheckbox
+- Source: `Components/ui-checkbox.js`
+- Kind: web-component `<ui-checkbox>`
+- Summary: An independent binary selection control.
+- Use when: Multiple options may be selected independently.
+- Don't use when: Exactly one option must be chosen; use radio.
+- Props: `label`, `checked`, `disabled`, `name`, `value`
+
+### UIRadio
+- Source: `Components/ui-radio.js`
+- Kind: web-component `<ui-radio>`
+- Summary: A single option within an exclusive choice group.
+- Use when: Exactly one of several visible options must be chosen.
+- Don't use when: Options are independent; use checkbox.
+- Props: `name`, `value`, `label`, `checked`, `disabled`
+
+### UIToggle
+- Source: `Components/ui-toggle.js`
+- Kind: web-component `<ui-toggle>`
+- Summary: An immediate on/off setting control.
+- Use when: Changing the switch should take effect immediately.
+- Don't use when: The value is part of a form submitted later; use checkbox.
+- Props: `label`, `checked`, `disabled`, `name`
+
+### UISearch
+- Source: `Components/ui-search.js`
+- Kind: web-component `<ui-search>`
+- Summary: A dedicated search/filter field.
+- Use when: Users need to find or filter items in the current context.
+- Don't use when: Collecting ordinary text data; use text input.
+- Props: `placeholder`, `value`, `disabled`, `label`
 
 ### UIAlert
+- Source: `Components/ui-alert.js`
+- Kind: web-component `<ui-alert>`
+- Summary: Persistent contextual feedback with semantic status variants.
+- Use when: Information or an outcome should remain visible in context.
+- Don't use when: The message is transient and non-blocking; use toast.
+- Props: `variant`, `title`, `dismissible`
 
-- Source: `js/components/ui-alert.js` (line 4)
-- Kind: web-component `<ui-alert>` · export `UIAlert`
-- Summary: A dismissible alert component that displays contextual messages in info, success, warning, or danger variants with an icon and optional title.
-- Use when: You need to show users time-sensitive feedback or important information that they can acknowledge and close, such as form submission results, validation errors, or system status updates.
-- Don't use when: For persistent notifications that should not be closeable, use a notification component instead. For inline field-level validation messages, use a form validation component.
-- Description source: AI draft from source — check it reads true
-- Props:
-  - `variant`: string — optional — default `info` — read from observedAttributes
-  - `title`: string — optional — read from observedAttributes
-  - `dismissible`: boolean — optional — read from observedAttributes
-- Doc comment in source: <ui-alert variant="success" title="Saved" dismissible>Your changes are live.</ui-alert> Variants: info, success, warning, danger. Fires "dismiss" when closed.
+### UITabs
+- Source: `Components/ui-tabs.js`
+- Kind: web-component `<ui-tabs>`
+- Summary: A peer-view switcher for a small number of related sections.
+- Use when: Views are peers and users may switch between them in any order.
+- Don't use when: The flow is sequential; use a step/progress pattern.
+- Props: `labels`, `selected`
+
+### UIAccordion
+- Source: `Components/ui-accordion.js`
+- Kind: web-component `<ui-accordion>`
+- Summary: A disclosure component for optional details.
+- Use when: Secondary content can be hidden until requested.
+- Don't use when: The content is required to complete the primary task.
+- Props: `label`, `open`, `disabled`
 
 ### UIModal
+- Source: `Components/ui-modal.js`
+- Kind: web-component `<ui-modal>`
+- Summary: A blocking dialog for confirmation or a short focused task.
+- Use when: The user must resolve a decision before returning to the underlying UI.
+- Don't use when: Content is long, navigational, or non-blocking.
+- Props: `heading`, `open`, `size`, `dismissible`
 
-- Source: `js/components/ui-modal.js` (line 5)
-- Kind: web-component `<ui-modal>` · export `UIModal`
-- Summary: A modal dialog component that displays a heading, body content, and optional footer actions, dismissible via close button, scrim click, or Escape key.
-- Use when: You need to present important information or request confirmation that requires user attention before proceeding. Use when the interaction should block access to the rest of the page until resolved.
-- Don't use when: Do not use for non-blocking notifications or alerts—use a toast or snackbar instead. Do not use for complex multi-step forms—use a dedicated dialog or wizard component.
-- Description source: AI draft from source — check it reads true
-- Props:
-  - `heading`: string — optional — read from observedAttributes
-  - `open`: boolean — optional — read from observedAttributes
-  - `size`: string — optional — default `md` — read from observedAttributes
-- Doc comment in source: <ui-modal heading="Delete project" open><p>This cannot be undone.</p><ui-button slot="footer" variant="danger">Delete</ui-button></ui-modal> Slots: default (body), footer. Fires "close" when dismissed. Closes on scrim click, on the close button, and on Escape.
+### UIPagination
+- Source: `Components/ui-pagination.js`
+- Kind: web-component `<ui-pagination>`
+- Summary: Page navigation for a known result set.
+- Use when: Stable page boundaries help lookup or comparison.
+- Don't use when: The total is unknown or continuous loading is a better fit.
+- Props: `page`, `total`
 
-### UITable
+### UIProgress
+- Source: `Components/ui-progress.js`
+- Kind: web-component `<ui-progress>`
+- Summary: A progress bar for measurable completion.
+- Use when: The system can estimate a real percentage.
+- Don't use when: Completion cannot be estimated; use skeleton.
+- Props: `value`, `label`, `variant`
 
-- Source: `js/components/ui-table.js` (line 5)
-- Kind: web-component `<ui-table>` · export `UITable`
-- Summary: A web component that renders tabular data with configurable columns and rows, supporting striped and compact density modes.
-- Use when: You need to display structured data in rows and columns with optional visual density adjustments. Use when you want a self-contained table element that parses comma-separated columns and semicolon/pipe-separated cell data.
-- Don't use when: Do not use for complex interactive tables requiring sorting, filtering, or pagination; use a more feature-rich data grid component instead. Do not use for layout purposes unrelated to tabular data.
-- Description source: AI draft from source — check it reads true
-- Props:
-  - `columns`: string — optional — read from observedAttributes
-  - `rows`: "Jane Doe" | "Designer" | "Active;Sam Reed" | "Engineer" | "Away" — optional — one of `Jane Doe` | `Designer` | `Active;Sam Reed` | `Engineer` | `Away` — read from observedAttributes
-  - `striped`: string — optional — read from observedAttributes
-  - `compact`: boolean — optional — read from observedAttributes
-  - `caption`: string — optional — read from observedAttributes
-- Variants:
-  - `rows`: `Jane Doe` | `Designer` | `Active;Sam Reed` | `Engineer` | `Away`
-- Doc comment in source: <ui-table columns="Name,Role,Status" rows="Jane Doe|Designer|Active;Sam Reed|Engineer|Away"></ui-table> Columns are comma-separated; rows are semicolon-separated with pipe-separated cells. Add "striped" or "compact" to change density. Fires "rowclick" with detail.index.
+### UISkeleton
+- Source: `Components/ui-skeleton.js`
+- Kind: web-component `<ui-skeleton>`
+- Summary: A structural loading placeholder for unknown-duration loading.
+- Use when: Content shape is known but load completion is not.
+- Don't use when: A real percentage is available; use progress.
+- Props: `lines`, `width`, `height`, `circle`
 
 ### UIToast
+- Source: `Components/ui-toast.js`
+- Kind: web-component `<ui-toast>`
+- Summary: Brief non-blocking outcome feedback.
+- Use when: Confirming a save, update, copy, or lightweight warning without interrupting work.
+- Don't use when: The message requires acknowledgment or persistent action.
+- Props: `variant`, `message`, `duration`
 
-- Source: `js/components/ui-toast.js` (line 5)
-- Kind: web-component `<ui-toast>` · export `UIToast`
-- Summary: A fixed-position notification that displays a brief message in a corner and automatically dismisses after a specified duration.
-- Use when: You need to inform users of a transient event outcome like a successful save or warning, and the message should not block interaction with the page. Set duration to 0 if the toast should persist until manually dismissed.
-- Don't use when: For critical errors requiring user acknowledgment or action—use a modal dialog instead. For messages that need to persist on the page or be permanently logged—use an alert component or separate log section instead.
-- Description source: AI draft from source — check it reads true
-- Props:
-  - `variant`: string — optional — default `info` — read from observedAttributes
-  - `message`: string — optional — read from observedAttributes
-  - `duration`: string — optional — read from observedAttributes
-  - `position`: string — optional — default `bottom-right` — read from observedAttributes
-- Doc comment in source: <ui-toast variant="success" message="Saved successfully" duration="4000"></ui-toast> Appears fixed in the corner and removes itself after "duration" ms (0 keeps it). Variants: info, success, warning, danger. Fires "dismiss" when it goes.
+## Design dependency
 
----
-
-*Remaining components in the published file, same format: UIAccordion, UIAvatar, UIBadge,
-UICheckbox, UIChip, UIDivider, UIDropdown, UIEmptyState, UIIconButton, UIPagination,
-UIProgress, UIRadio, UISearchField, UISelect, UISkeleton, UISlider, UISpinner, UITabs,
-UITextarea, UITextfield, UIToggle, UITooltip.*
+Design tokens live in `../tokens/tokens.json`, with readable rules in `../tokens/Design.md` and runtime/SCSS representations in `../tokens/tokens.js` and `../tokens/tokens.scss`.

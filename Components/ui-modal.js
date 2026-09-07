@@ -1,0 +1,9 @@
+/**
+ * <ui-modal heading="Delete project" open>This cannot be undone.</ui-modal>
+ * Blocking confirmation or short focused task. Set open to display.
+ */
+class UIModal extends HTMLElement {
+  static get observedAttributes(){return ["heading","open","size","dismissible"]}
+  constructor(){super();this.attachShadow({mode:"open"})} connectedCallback(){this.render()} attributeChangedCallback(){this.render()}
+  render(){const heading=this.getAttribute("heading")||"Delete project",open=this.hasAttribute("open"),size=this.getAttribute("size")||"md";const width={sm:"360px",md:"520px",lg:"720px"}[size]||"520px";this.shadowRoot.innerHTML=`<style>:host{display:${open?"block":"none"};font-family:var(--font-family-base,system-ui);color:var(--color-on-surface,#161c27)}.scrim{min-height:220px;padding:24px;background:var(--color-scrim,#0000004d);display:grid;place-items:center}.dialog{width:min(100%,${width});background:var(--color-surface,#fff);border-radius:var(--radius-lg,16px);box-shadow:var(--elevation-3,0 8px 24px #0003);overflow:hidden}header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--color-outline-variant,#c6c4c0)}h2{margin:0;font:var(--title-l,500 20px/28px system-ui)}.body{padding:20px;font:var(--body-m,400 14px/20px system-ui)}button{border:0;background:transparent;font-size:20px;cursor:pointer}</style><div class="scrim"><section class="dialog" role="dialog" aria-modal="true"><header><h2>${heading}</h2><button aria-label="Close">×</button></header><div class="body"><slot>This cannot be undone.</slot></div></section></div>`;this.shadowRoot.querySelector("button")?.addEventListener("click",()=>{this.removeAttribute("open");this.dispatchEvent(new CustomEvent("close",{bubbles:true,composed:true}))})}}
+customElements.define("ui-modal",UIModal);export default UIModal;

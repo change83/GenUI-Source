@@ -1,0 +1,69 @@
+@use '../tokens/tokens' as t;
+
+// GenUI component bridge.
+// Source previews are self-contained in each component JS file; this SCSS maps
+// the runtime design-token layer to the stable variable names used by components.
+
+:root {
+  --color-primary: var(--gen-color-action-primary);
+  --color-primary-hover: var(--gen-color-action-primary-hover);
+  --color-primary-pressed: var(--gen-color-action-primary-active);
+  --color-secondary: var(--gen-color-action-secondary);
+  --color-error: var(--gen-color-action-danger);
+  --color-on-primary: var(--gen-color-text-inverse);
+  --color-on-error: var(--gen-color-text-inverse);
+  --color-on-surface: var(--gen-color-text-primary);
+  --color-on-surface-variant: var(--gen-color-text-secondary);
+  --color-on-surface-muted: var(--gen-color-text-muted);
+  --color-surface: var(--gen-color-surface-base);
+  --color-surface-container: var(--gen-color-surface-subtle);
+  --color-surface-container-highest: var(--gen-color-surface-strong);
+  --color-outline: var(--gen-color-border-strong);
+  --color-outline-variant: var(--gen-color-border-subtle);
+  --color-focus: var(--gen-color-focus);
+  --radius-sm: var(--gen-radius-sm);
+  --radius-md: var(--gen-radius-md);
+  --radius-lg: var(--gen-radius-lg);
+  --elevation-1: var(--gen-shadow-1);
+  --elevation-2: var(--gen-shadow-2);
+  --elevation-3: var(--gen-shadow-3);
+  --duration-fast: var(--gen-motion-fast);
+  --duration-base: var(--gen-motion-base);
+  --ease-standard: var(--gen-ease-standard);
+  --font-family-base: var(--gen-font-family-base);
+}
+
+ui-button,
+ui-card,
+ui-text-input,
+ui-textarea,
+ui-select,
+ui-checkbox,
+ui-radio,
+ui-toggle,
+ui-search,
+ui-alert,
+ui-tabs,
+ui-accordion,
+ui-modal,
+ui-pagination,
+ui-progress,
+ui-skeleton,
+ui-toast {
+  box-sizing: border-box;
+}
+
+ui-card,
+ui-text-input,
+ui-textarea,
+ui-select,
+ui-search,
+ui-alert,
+ui-tabs,
+ui-accordion,
+ui-pagination,
+ui-progress,
+ui-skeleton,
+ui-toast {
+  display: block;
+}
