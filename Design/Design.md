@@ -1,204 +1,229 @@
-# Design.md — ustwo/basic-web
+# GenUI Design
 
-Generated 2026-08-28 by reading the JSON in this repository’s tokens folder on develop.
-That JSON is the Figma export: no hand-typed values, and no second source to reconcile against.
-Component definitions live in Components.md; the two files are independent.
+A compact design foundation for generated interfaces.
 
-- Token files read: 1 (tokens.json → 147)
-- Values: 147 · unique names: 147
-- Modes published: base
-- Slot resolution uses: base
-- Alias references resolved to a literal: 0
-- Values skipped as not visual: 0 (booleans and composite objects)
+`Design.md` is the readable rule set. `tokens.js` is the machine-readable token source for JavaScript. `tokens.scss` exposes the same system to SCSS/CSS. Components must consume semantic tokens instead of embedding visual values.
 
-## Colour
+The organization follows the same broad idea used by mature design systems such as Carbon: foundations and theme tokens are separated from component behavior, while generated UI consumes a stable semantic layer.
 
-Source: repo tokens folder · 57 properties
+## Token hierarchy
 
-- `color/hex/colorBackgroundBlurScrim` — #0000001F
-- `color/hex/colorError` — #CC1730
-- `color/hex/colorErrorContainer` — #FFD9DC
-- `color/hex/colorErrorHover` — #B5142B
-- `color/hex/colorErrorPressed` — #A11225
-- `color/hex/colorFocus` — #161C27
-- `color/hex/colorFocusContainer` — #F1EEEB
-- `color/hex/colorInverseOnSurface` — #F5F3F1
-- `color/hex/colorInverseSurface` — #161C27
-- `color/hex/colorOnError` — #FFFFFF
-- `color/hex/colorOnErrorContainer` — #410008
-- `color/hex/colorOnFocus` — #FFFFFF
-- `color/hex/colorOnFocusContainer` — #161C27
-- `color/hex/colorOnPrimary` — #FFFFFF
-- `color/hex/colorOnPrimaryContainer` — #210A47
-- `color/hex/colorOnSecondary` — #FFFFFF
-- `color/hex/colorOnSecondaryContainer` — #001945
-- `color/hex/colorOnSuccess` — #FFFFFF
-- `color/hex/colorOnSuccessContainer` — #00210F
-- `color/hex/colorOnSurface` — #161C27
-- `color/hex/colorOnSurfaceDisabled` — #0000004D
-- `color/hex/colorOnSurfaceMuted` — #92908F
-- `color/hex/colorOnSurfaceVariant` — #5F5E60
-- `color/hex/colorOnTertiary` — #FFFFFF
-- `color/hex/colorOnTertiaryContainer` — #410008
-- `color/hex/colorOnWarning` — #FFFFFF
-- `color/hex/colorOnWarningContainer` — #271900
-- `color/hex/colorOutline` — #757775
-- `color/hex/colorOutlineInverse` — #FFFFFF
-- `color/hex/colorOutlineVariant` — #C6C4C0
-- `color/hex/colorPrimary` — #6C43C6
-- `color/hex/colorPrimaryContainer` — #E9DDFF
-- `color/hex/colorPrimaryContainerHover` — #DFD0FA
-- `color/hex/colorPrimaryContainerPressed` — #D6C4F7
-- `color/hex/colorPrimaryHover` — #5F3BAE
-- `color/hex/colorPrimaryPressed` — #563597
-- `color/hex/colorScrim` — #0000004D
-- `color/hex/colorScrimHeavy` — #00000099
-- `color/hex/colorSecondary` — #3571FE
-- `color/hex/colorSecondaryContainer` — #DCE7FF
-- `color/hex/colorStateHover` — #0000001F
-- `color/hex/colorStatePressed` — #00000029
-- `color/hex/colorSuccess` — #1C8843
-- `color/hex/colorSuccessContainer` — #C3F5C8
-- `color/hex/colorSurface` — #FFFFFF
-- `color/hex/colorSurfaceBlur` — #FFFFFF99
-- `color/hex/colorSurfaceBlurHigh` — #FFFFFFCC
-- `color/hex/colorSurfaceBlurLow` — #FFFFFF4D
-- `color/hex/colorSurfaceContainer` — #F5F3F1
-- `color/hex/colorSurfaceContainerHighest` — #E9E7E3
-- `color/hex/colorSurfaceContainerHover` — #EDEAE7
-- `color/hex/colorSurfaceContainerPressed` — #E4E1DD
-- `color/hex/colorSurfaceDisabled` — #0000001F
-- `color/hex/colorTertiary` — #FB575F
-- `color/hex/colorTertiaryContainer` — #FFD9D8
-- `color/hex/colorWarning` — #8C6D00
-- `color/hex/colorWarningContainer` — #FFE9A3
+Use tokens in this order:
 
-## Typography
+1. **Foundation tokens** — raw scale values such as spacing steps and type sizes.
+2. **Semantic tokens** — role-based values such as `text-primary`, `surface`, `border-subtle`, `action-primary`.
+3. **Component tokens** — local aliases used by components, derived from semantic tokens.
 
-Source: repo tokens folder · 43 properties
+Generated component markup should normally reference no visual value directly. Component SCSS should prefer semantic tokens. Raw foundation values are acceptable only for building or extending the system itself.
 
-- `typography/font/bodyL` — 400 16px/24px var(--font-family-base)
-- `typography/font/bodyLBold` — 700 16px/24px var(--font-family-base)
-- `typography/font/bodyLMedium` — 500 16px/24px var(--font-family-base)
-- `typography/font/bodyM` — 400 14px/20px var(--font-family-base)
-- `typography/font/bodyMBold` — 700 14px/20px var(--font-family-base)
-- `typography/font/bodyMMedium` — 500 14px/20px var(--font-family-base)
-- `typography/font/bodyS` — 400 12px/16px var(--font-family-base)
-- `typography/font/bodySBold` — 700 12px/16px var(--font-family-base)
-- `typography/font/bodySMedium` — 500 12px/16px var(--font-family-base)
-- `typography/font/bodyXs` — 400 11px/16px var(--font-family-base)
-- `typography/font/displayL` — 700 48px/56px var(--font-family-base)
-- `typography/font/displayM` — 700 44px/52px var(--font-family-base)
-- `typography/font/displayS` — 700 40px/48px var(--font-family-base)
-- `typography/font/displayXl` — 700 52px/60px var(--font-family-base)
-- `typography/font/displayXs` — 700 36px/44px var(--font-family-base)
-- `typography/font/fontFamilyBase` — 'Rookery New', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif
-- `typography/font/fontFamilyMono` — ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace
-- `typography/font/headlineL` — 700 32px/40px var(--font-family-base)
-- `typography/font/headlineM` — 700 28px/36px var(--font-family-base)
-- `typography/font/headlineS` — 700 22px/28px var(--font-family-base)
-- `typography/font/labelL` — 500 16px/24px var(--font-family-base)
-- `typography/font/labelM` — 500 14px/20px var(--font-family-base)
-- `typography/font/labelS` — 500 12px/16px var(--font-family-base)
-- `typography/font/labelXs` — 500 11px/16px var(--font-family-base)
-- `typography/font/titleL` — 500 20px/28px var(--font-family-base)
-- `typography/font/titleM` — 500 18px/24px var(--font-family-base)
-- `typography/font/titleS` — 500 16px/20px var(--font-family-base)
-- `typography/font/titleXl` — 500 24px/32px var(--font-family-base)
-- `typography/font/titleXs` — 500 14px/18px var(--font-family-base)
-- `typography/font/trackingBodyL` — 0.25px
-- `typography/font/trackingBodyM` — 0.25px
-- `typography/font/trackingBodyS` — 0.1px
-- `typography/font/trackingDisplay` — -0.5px
-- `typography/font/trackingHeadlineL` — -0.4px
-- `typography/font/trackingLabelL` — 0.1px
-- `typography/font/trackingLabelM` — 0.1px
-- `typography/font/trackingLabelS` — 0.25px
-- `typography/font/trackingLabelXs` — 0.5px
-- `typography/font/trackingTitleM` — 0.15px
-- `typography/font/trackingTitleS` — 0.1px
-- `typography/font/weightBold` — 700
-- `typography/font/weightMedium` — 500
-- `typography/font/weightRegular` — 400
+## Core design rules
 
-## Effects
+### 1. Color
 
-Source: repo tokens folder · 17 properties
+Use color by meaning, not by decoration.
 
-- `blur/pX/blurPromptBar` — 24px
-  - categorised by hand
-- `blur/pX/blurSurface` — 16px
-  - categorised by hand
-- `blur/pX/blurWindow` — 40px
-  - categorised by hand
-- `borderWidth/pX/borderMedium` — 2
-  - categorised by hand
-- `borderWidth/pX/borderThick` — 3
-  - categorised by hand
-- `borderWidth/pX/borderThin` — 1
-  - categorised by hand
-- `opacity/n/opacityDisabled` — 0.38
-  - categorised by hand
-- `opacity/n/opacityFull` — 1
-  - categorised by hand
-- `opacity/n/opacityMuted` — 0.75
-  - categorised by hand
-- `opacity/n/opacitySubtle` — 0.6
-  - categorised by hand
-- `shadow/css/elevation1` — 0 1px 2px rgba(22, 28, 39, 0.04), 0 1px 3px rgba(22, 28, 39, 0.06)
-- `shadow/css/elevation2` — 0 2px 4px rgba(22, 28, 39, 0.05), 0 4px 8px rgba(22, 28, 39, 0.06)
-- `shadow/css/elevation3` — 0 4px 8px rgba(22, 28, 39, 0.06), 0 8px 16px rgba(22, 28, 39, 0.08)
-- `shadow/css/elevation4` — 0 8px 16px rgba(22, 28, 39, 0.07), 0 16px 32px rgba(22, 28, 39, 0.10)
-- `shadow/css/elevation5` — 0 12px 24px rgba(22, 28, 39, 0.08), 0 24px 48px rgba(22, 28, 39, 0.14)
-- `shadow/css/elevationBottom` — 0 -1px 3px rgba(22, 28, 39, 0.05)
-- `shadow/css/shadowFocus` — 0 0 0 3px rgba(108, 67, 198, 0.32)
+| Role | Token | Default |
+|---|---|---|
+| Brand/action | `color.action.primary` | `#6C43C6` |
+| Secondary action | `color.action.secondary` | `#3571FE` |
+| Primary text | `color.text.primary` | `#161C27` |
+| Secondary text | `color.text.secondary` | `#5F5E60` |
+| Base surface | `color.surface.base` | `#FFFFFF` |
+| Subtle surface | `color.surface.subtle` | `#F5F3F1` |
+| Strong border | `color.border.strong` | `#757775` |
+| Subtle border | `color.border.subtle` | `#C6C4C0` |
+| Success | `color.status.success` | `#1C8843` |
+| Warning | `color.status.warning` | `#8C6D00` |
+| Danger | `color.status.danger` | `#CC1730` |
+| Focus | `color.focus` | `#6C43C6` |
 
-## Spacing
+Rules:
 
-Source: repo tokens folder · 11 properties
+- Never use status colors as decorative accents.
+- Text placed on semantic status/action colors must use the matching `on-*` token.
+- Focus indication must remain visible and must not rely on color change alone.
+- Prefer neutral surfaces. Use stronger color for action, state, or hierarchy.
 
-- `spacing/pX/spacing0` — 0px
-- `spacing/pX/spacing1` — 2px
-- `spacing/pX/spacing10` — 56px
-- `spacing/pX/spacing2` — 4px
-- `spacing/pX/spacing3` — 8px
-- `spacing/pX/spacing4` — 12px
-- `spacing/pX/spacing5` — 16px
-- `spacing/pX/spacing6` — 20px
-- `spacing/pX/spacing7` — 24px
-- `spacing/pX/spacing8` — 32px
-- `spacing/pX/spacing9` — 40px
+### 2. Typography
 
-## Radius
+Default family:
 
-Source: repo tokens folder · 5 properties
+```text
+Rookery New, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif
+```
 
-- `radius/pX/radiusLg` — 16px
-- `radius/pX/radiusMd` — 12px
-- `radius/pX/radiusPill` — 9999px
-- `radius/pX/radiusSm` — 8px
-- `radius/pX/radiusXl` — 24px
+Fallbacks are required so generated UI remains robust when the preferred font is unavailable.
 
-## Motion
+| Style | Size / line | Weight | Use |
+|---|---|---|---|
+| Display | 40 / 48 | 700 | Hero-level value or title |
+| Heading L | 32 / 40 | 700 | Page heading |
+| Heading M | 28 / 36 | 700 | Major section |
+| Heading S | 22 / 28 | 700 | Local section |
+| Title | 18 / 24 | 500 | Card/dialog title |
+| Body L | 16 / 24 | 400 | Long-form content |
+| Body M | 14 / 20 | 400 | Default UI text |
+| Body S | 12 / 16 | 400 | Supporting metadata |
+| Label | 14 / 20 | 500 | Controls and compact emphasis |
 
-Source: repo tokens folder · 6 properties
+Rules:
 
-- `motion/css/durationBase` — 200ms
-- `motion/css/durationFast` — 120ms
-- `motion/css/durationSlow` — 320ms
-- `motion/css/easeOut` — cubic-bezier(0, 0, 0.2, 1)
-- `motion/css/easeSpring` — cubic-bezier(0.34, 1.56, 0.64, 1)
-- `motion/css/easeStandard` — cubic-bezier(0.4, 0, 0.2, 1)
+- Use no more than 3 text hierarchy levels in one local surface.
+- Body M is the default UI size.
+- Do not shrink important content to fit; change layout instead.
+- Numeric KPI values may use tabular numerals where available.
 
-## Z-index
+### 3. Spacing
 
-Source: repo tokens folder · 8 properties
+Use the shared spacing scale:
 
-- `zIndex/n/zBase` — 0
-- `zIndex/n/zDropdown` — 1000
-- `zIndex/n/zModal` — 1300
-- `zIndex/n/zOverlay` — 1200
-- `zIndex/n/zRaised` — 10
-- `zIndex/n/zSticky` — 100
-- `zIndex/n/zToast` — 1400
-- `zIndex/n/zTooltip` — 1500
+`0, 2, 4, 8, 12, 16, 20, 24, 32, 40, 56px`
+
+Preferred usage:
+
+- `4–8`: icon/text and compact internal gaps
+- `12–16`: normal control and card internals
+- `20–24`: section spacing
+- `32–56`: major layout separation
+
+Generated UI should use the smallest spacing step that still preserves scanability. Avoid arbitrary values such as `13px`, `17px`, or `27px`.
+
+### 4. Layout
+
+Use a responsive 4 / 8 / 12 column model:
+
+| Viewport | Columns | Outer gutter | Typical gap |
+|---|---:|---:|---:|
+| `< 672px` | 4 | 16px | 16px |
+| `672–1055px` | 8 | 24px | 16–24px |
+| `>= 1056px` | 12 | 32px | 24px |
+
+Rules:
+
+- Prefer fluid containers with a max readable width over fixed page widths.
+- Do not create empty columns just to preserve a template shape.
+- Cards in the same row should align to a shared grid and baseline.
+- In generated dashboards, prioritize information density without reducing touch/click target size.
+- When content becomes narrow, stack rather than compress controls below usable size.
+
+### 5. Radius
+
+Use a small semantic set:
+
+- `sm`: 8px — controls, compact chips
+- `md`: 12px — inputs and standard containers
+- `lg`: 16px — cards
+- `xl`: 24px — large floating surfaces
+- `pill`: 9999px — tags and pill controls
+
+Do not mix multiple radius families in one surface without semantic reason.
+
+### 6. Elevation and blur
+
+Elevation should indicate hierarchy, not decoration.
+
+- `elevation-1`: subtle separation
+- `elevation-2`: raised card/menu
+- `elevation-3`: dialog/floating panel
+- `focus-ring`: interaction focus only
+
+Blur is allowed only for surfaces that visually sit above content. Keep text contrast valid on translucent backgrounds.
+
+### 7. Motion
+
+Durations:
+
+- Fast: `120ms`
+- Base: `200ms`
+- Slow: `320ms`
+
+Easing:
+
+- Standard: state transitions
+- Ease-out: entering/revealing
+- Spring: small delight moments only
+
+Rules:
+
+- Motion must explain change, hierarchy, or continuity.
+- Avoid motion that delays completion feedback.
+- Respect `prefers-reduced-motion`.
+
+### 8. Interaction size
+
+- Minimum pointer target: 40px preferred for common controls.
+- Dense desktop surfaces may use 32px controls when spacing and context remain clear.
+- Icon-only controls require a text alternative.
+
+### 9. States
+
+Every interactive component must be able to distinguish:
+
+- default
+- hover
+- active/pressed
+- focus-visible
+- disabled
+- selected/checked when applicable
+- error when applicable
+- loading when applicable
+
+Do not create state differences through opacity alone when meaning would become ambiguous.
+
+## GenUI layout decisions
+
+For model-generated interfaces, follow this order:
+
+1. Identify the dominant user task.
+2. Choose the smallest viable pattern: form, list, detail, table, dashboard, or confirmation.
+3. Establish content priority before visual styling.
+4. Choose existing components.
+5. Apply semantic tokens.
+6. Validate overflow, empty states, error states, and loading states.
+7. Validate responsive behavior.
+8. Remove decorative elements that do not improve comprehension or action.
+
+### Dashboard rules
+
+- Put the most decision-relevant KPI or status first.
+- Group related KPIs; do not create one card per number by default.
+- Charts need a question to answer, not just data to fill space.
+- Avoid more than 4 strong visual accents in one viewport.
+- Tables are for comparison and lookup; cards are for summary and hierarchy.
+
+### Form rules
+
+- Prefer one column for data-entry tasks.
+- Use two columns only for short, tightly related fields on wide screens.
+- Keep labels visible; placeholders are examples, not labels.
+- Put validation close to the field.
+- Destructive actions must not be visually equal to the main positive action.
+
+## Theme support
+
+The SCSS exposes CSS custom properties in `:root` and a dark theme under:
+
+```html
+<html data-theme="dark">
+```
+
+JavaScript consumers can read `designTokens` or use `applyTheme()` for runtime overrides.
+
+## Files
+
+- `Design.md` — readable design rules and token guidance
+- `tokens.js` — machine-readable tokens + runtime helpers
+- `tokens.scss` — SCSS variables, maps, mixins, CSS custom properties
+- `../Components/Components.md` — component selection and API rules
+- `../Components/components.js` — behavior
+- `../Components/components.scss` — component styles
+
+## Governance
+
+A token should be added only when at least one of these is true:
+
+- it expresses a reusable semantic role;
+- it resolves repeated inconsistency;
+- it is required by an approved component or platform need.
+
+Avoid token aliases that differ only by name. The semantic layer should stay small enough that both designers and models can reliably choose the right value.
