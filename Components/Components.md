@@ -1,114 +1,267 @@
-# Components.md — ustwo/basic-web
+# GenUI Components
 
-> **This file is an excerpt.** The published original is 28 components and ~35,000
-> characters — every component in `js/components` in the same shape as the six below.
-> It is included so you can see the format the tool produces; it is not loaded into the
-> app, and the app generates its own from whatever repo you point it at.
+A compact component library for generated interfaces.
 
-Generated 2026-08-28 by reading js/components in ustwo/basic-web on branch develop.
-Every file in that folder is a component by construction — the repo's own structure is the filter,
-so nothing was excluded here. Props are extracted from raw source, not from a manifest or a package.
-The three descriptive fields are drafted from source and reviewed by hand. Design tokens live in Design.md.
+This folder is intentionally small and explicit: one readable component contract (`Components.md`), one browser implementation (`components.js`), and one SCSS source (`components.scss`). The structure is inspired by Carbon's separation of component documentation, behavior, and styles, but the implementation here is purpose-built for GenUI.
 
-- Components: 28
-- Props read from source: 107
-- Mount: each component is the default or named export of its own source file, compiled from that file
+## Why this shape
 
-## js/components
+GenUI needs component definitions that are:
 
-### UIButton
+- **Human-readable** — a designer can understand what a component is for without reading source.
+- **Agent-readable** — names, props, states, and selection rules are explicit and stable.
+- **Executable** — the JS registers real custom elements.
+- **Token-driven** — SCSS consumes only design tokens from `../Design/tokens.scss`.
+- **Small by default** — use common components first; add new components only when repeated product needs justify them.
 
-- Source: `js/components/ui-button.js` (line 6)
-- Kind: web-component `<ui-button>` · export `UIButton`
-- Summary: A customizable button web component that supports multiple visual variants, sizes, and states with native click event propagation.
-- Use when: You need a button for user interactions with configurable appearance through variants (primary, secondary, success, warning, danger, ghost, light) and sizes (sm, md, lg). Use when you need full-width layout control via the full attribute or disabled state management.
-- Don't use when: Do not use for toggle buttons or checkbox/radio-like behaviors; use a dedicated toggle component instead. Do not use when you need a link that navigates; use a link component instead.
-- Description source: AI draft from source — check it reads true
-- Props:
-  - `variant`: string — optional — default `primary` — read from observedAttributes
-  - `size`: string — optional — default `md` — read from observedAttributes
-  - `disabled`: boolean — optional — read from observedAttributes
-  - `full`: string — optional — read from observedAttributes
-  - `type`: string — optional — default `button` — read from observedAttributes
-- Doc comment in source: <ui-button variant="primary" size="md">Save changes</ui-button> Variants: primary, secondary, success, warning, danger, ghost, light. Sizes: sm, md, lg. Add the bare attribute "disabled" or "full" as needed. Fires a native "click" event (composed, so it bubbles out of the shadow root).
+## Usage
 
-### UICard
+```js
+import { registerGenUIComponents } from './Components/components.js';
 
-- Source: `js/components/ui-card.js` (line 5)
-- Kind: web-component `<ui-card>` · export `UICard`
-- Summary: A container component that displays content in a card with optional header and footer slots, supporting raised or flat elevation styles.
-- Use when: You need to group related content in a self-contained surface with clear visual hierarchy. Use it with the raised attribute for emphasis or flat for a minimal border-only appearance.
-- Don't use when: Do not use this component for full-page layouts or modal dialogs—use a dedicated layout or modal component instead. Do not use it when you need custom shadow or elevation states beyond raised and flat variants.
-- Description source: AI draft from source — check it reads true
-- Props:
-  - `raised`: string — optional — read from observedAttributes
-  - `flat`: string — optional — read from observedAttributes
-- Doc comment in source: <ui-card><span slot="header">Project status</span> Three tasks remain. <span slot="footer">Updated today</span></ui-card> Slots: default (body), header, footer. Add "raised" for a stronger shadow, or "flat" for a border-only card with no elevation.
+registerGenUIComponents();
+```
 
-### UIAlert
+Compile `Components/components.scss` together with `Design/tokens.scss`, then load the resulting CSS globally.
 
-- Source: `js/components/ui-alert.js` (line 4)
-- Kind: web-component `<ui-alert>` · export `UIAlert`
-- Summary: A dismissible alert component that displays contextual messages in info, success, warning, or danger variants with an icon and optional title.
-- Use when: You need to show users time-sensitive feedback or important information that they can acknowledge and close, such as form submission results, validation errors, or system status updates.
-- Don't use when: For persistent notifications that should not be closeable, use a notification component instead. For inline field-level validation messages, use a form validation component.
-- Description source: AI draft from source — check it reads true
-- Props:
-  - `variant`: string — optional — default `info` — read from observedAttributes
-  - `title`: string — optional — read from observedAttributes
-  - `dismissible`: boolean — optional — read from observedAttributes
-- Doc comment in source: <ui-alert variant="success" title="Saved" dismissible>Your changes are live.</ui-alert> Variants: info, success, warning, danger. Fires "dismiss" when closed.
+```html
+<ui-button variant="primary">Continue</ui-button>
 
-### UIModal
+<ui-text-input
+  label="Project name"
+  placeholder="Untitled project">
+</ui-text-input>
+```
 
-- Source: `js/components/ui-modal.js` (line 5)
-- Kind: web-component `<ui-modal>` · export `UIModal`
-- Summary: A modal dialog component that displays a heading, body content, and optional footer actions, dismissible via close button, scrim click, or Escape key.
-- Use when: You need to present important information or request confirmation that requires user attention before proceeding. Use when the interaction should block access to the rest of the page until resolved.
-- Don't use when: Do not use for non-blocking notifications or alerts—use a toast or snackbar instead. Do not use for complex multi-step forms—use a dedicated dialog or wizard component.
-- Description source: AI draft from source — check it reads true
-- Props:
-  - `heading`: string — optional — read from observedAttributes
-  - `open`: boolean — optional — read from observedAttributes
-  - `size`: string — optional — default `md` — read from observedAttributes
-- Doc comment in source: <ui-modal heading="Delete project" open><p>This cannot be undone.</p><ui-button slot="footer" variant="danger">Delete</ui-button></ui-modal> Slots: default (body), footer. Fires "close" when dismissed. Closes on scrim click, on the close button, and on Escape.
+## Generation rules
 
-### UITable
+1. **Reuse before creating.** Choose an existing component when it can express the interaction without custom structure.
+2. **Do not invent props.** Only use attributes documented in the catalog below.
+3. **Prefer semantic variants.** Use `primary`, `secondary`, `danger`, `success`, `warning`, `info`, and `neutral` instead of raw colors.
+4. **One primary action per local task.** Additional actions should normally be secondary or ghost.
+5. **State must be explicit.** Disabled, error, selected, loading, and open states must come from component attributes rather than visual imitation.
+6. **Use native meaning.** Buttons trigger actions, links navigate, checkboxes allow independent selections, radios choose one option, toggles change an immediate binary setting.
+7. **Keep generated UI concise.** Prefer fewer components with clearer grouping over deeply nested surfaces.
+8. **Accessibility is part of the contract.** Interactive controls require visible labels or an `aria-label`; focus must never be removed.
+9. **No raw visual values in component markup.** Color, spacing, radius, typography, motion, and elevation come from Design tokens.
+10. **Escalate only when necessary.** A bespoke component is justified when the same new interaction pattern appears repeatedly and cannot be composed safely from the catalog.
 
-- Source: `js/components/ui-table.js` (line 5)
-- Kind: web-component `<ui-table>` · export `UITable`
-- Summary: A web component that renders tabular data with configurable columns and rows, supporting striped and compact density modes.
-- Use when: You need to display structured data in rows and columns with optional visual density adjustments. Use when you want a self-contained table element that parses comma-separated columns and semicolon/pipe-separated cell data.
-- Don't use when: Do not use for complex interactive tables requiring sorting, filtering, or pagination; use a more feature-rich data grid component instead. Do not use for layout purposes unrelated to tabular data.
-- Description source: AI draft from source — check it reads true
-- Props:
-  - `columns`: string — optional — read from observedAttributes
-  - `rows`: "Jane Doe" | "Designer" | "Active;Sam Reed" | "Engineer" | "Away" — optional — one of `Jane Doe` | `Designer` | `Active;Sam Reed` | `Engineer` | `Away` — read from observedAttributes
-  - `striped`: string — optional — read from observedAttributes
-  - `compact`: boolean — optional — read from observedAttributes
-  - `caption`: string — optional — read from observedAttributes
-- Variants:
-  - `rows`: `Jane Doe` | `Designer` | `Active;Sam Reed` | `Engineer` | `Away`
-- Doc comment in source: <ui-table columns="Name,Role,Status" rows="Jane Doe|Designer|Active;Sam Reed|Engineer|Away"></ui-table> Columns are comma-separated; rows are semicolon-separated with pipe-separated cells. Add "striped" or "compact" to change density. Fires "rowclick" with detail.index.
+## Common component catalog
 
-### UIToast
+| Component | Element | Use for | Key attributes |
+|---|---|---|---|
+| Button | `ui-button` | Primary and secondary actions | `variant`, `size`, `disabled`, `full`, `type` |
+| Icon button | `ui-icon-button` | Compact icon-only action | `label`, `variant`, `size`, `disabled` |
+| Card | `ui-card` | Grouping related content | `heading`, `subheading`, `elevated`, `interactive` |
+| Text input | `ui-text-input` | Single-line text entry | `label`, `value`, `placeholder`, `type`, `helper`, `error`, `disabled`, `name` |
+| Textarea | `ui-textarea` | Multi-line text entry | `label`, `value`, `placeholder`, `rows`, `helper`, `error`, `disabled`, `name` |
+| Select | `ui-select` | Choosing one item from a compact list | `label`, `options`, `value`, `placeholder`, `error`, `disabled`, `name` |
+| Checkbox | `ui-checkbox` | Independent on/off selection | `label`, `checked`, `disabled`, `name`, `value` |
+| Radio | `ui-radio` | One choice in a named group | `label`, `checked`, `disabled`, `name`, `value` |
+| Toggle | `ui-toggle` | Immediate binary setting | `label`, `checked`, `disabled`, `name` |
+| Search | `ui-search` | Search/filter input | `label`, `value`, `placeholder`, `disabled` |
+| Tag | `ui-tag` | Compact category/status label | `kind`, `size`, `dismissible` |
+| Alert | `ui-alert` | Contextual inline feedback | `kind`, `title`, `dismissible` |
+| Tabs | `ui-tabs` | Switching peer views | `items`, `active` |
+| Accordion | `ui-accordion` | Progressive disclosure | `items`, `multiple` |
+| Modal | `ui-modal` | Blocking confirmation or focused task | `heading`, `open`, `size`, `dismissible` |
+| Tooltip | `ui-tooltip` | Short supplementary explanation | `label`, `position` |
+| Pagination | `ui-pagination` | Paging a known result set | `page`, `page-size`, `total` |
+| Progress | `ui-progress` | Known completion progress | `value`, `label` |
+| Skeleton | `ui-skeleton` | Loading placeholder | `type`, `lines` |
+| Toast | `ui-toast` | Brief non-blocking outcome | `kind`, `message`, `duration` |
 
-- Source: `js/components/ui-toast.js` (line 5)
-- Kind: web-component `<ui-toast>` · export `UIToast`
-- Summary: A fixed-position notification that displays a brief message in a corner and automatically dismisses after a specified duration.
-- Use when: You need to inform users of a transient event outcome like a successful save or warning, and the message should not block interaction with the page. Set duration to 0 if the toast should persist until manually dismissed.
-- Don't use when: For critical errors requiring user acknowledgment or action—use a modal dialog instead. For messages that need to persist on the page or be permanently logged—use an alert component or separate log section instead.
-- Description source: AI draft from source — check it reads true
-- Props:
-  - `variant`: string — optional — default `info` — read from observedAttributes
-  - `message`: string — optional — read from observedAttributes
-  - `duration`: string — optional — read from observedAttributes
-  - `position`: string — optional — default `bottom-right` — read from observedAttributes
-- Doc comment in source: <ui-toast variant="success" message="Saved successfully" duration="4000"></ui-toast> Appears fixed in the corner and removes itself after "duration" ms (0 keeps it). Variants: info, success, warning, danger. Fires "dismiss" when it goes.
+## Component contracts
 
----
+### Button
 
-*Remaining components in the published file, same format: UIAccordion, UIAvatar, UIBadge,
-UICheckbox, UIChip, UIDivider, UIDropdown, UIEmptyState, UIIconButton, UIPagination,
-UIProgress, UIRadio, UISearchField, UISelect, UISkeleton, UISlider, UISpinner, UITabs,
-UITextarea, UITextfield, UIToggle, UITooltip.*
+Use for explicit actions such as save, continue, submit, retry, or delete.
+
+```html
+<ui-button variant="primary" size="md">Save changes</ui-button>
+<ui-button variant="danger">Delete</ui-button>
+```
+
+- Variants: `primary`, `secondary`, `ghost`, `danger`
+- Sizes: `sm`, `md`, `lg`
+- Use `full` only when the container is narrow or a single dominant action needs full width.
+- Do not use a button to navigate to a new URL.
+
+### Icon button
+
+Use when the icon meaning is standard and space is constrained.
+
+```html
+<ui-icon-button label="Close">×</ui-icon-button>
+```
+
+- `label` is required and becomes the accessible name.
+- Do not use an unlabeled icon-only action.
+
+### Card
+
+Use to group related content into one surface. Keep hierarchy shallow.
+
+```html
+<ui-card heading="Revenue" subheading="Last 30 days" elevated>
+  <strong>$128K</strong>
+</ui-card>
+```
+
+- `elevated` adds separation from the background.
+- `interactive` is for a card that behaves as one click target; do not place nested interactive controls inside it.
+
+### Text input / Textarea
+
+Use a visible label whenever possible. Use helper text for guidance and `error` for validation.
+
+```html
+<ui-text-input label="Email" type="email" error="Enter a valid email"></ui-text-input>
+```
+
+Events: `input`, `change`.
+
+### Select
+
+`options` is a JSON array. Use a select for a short, known list.
+
+```html
+<ui-select
+  label="Status"
+  value="active"
+  options='[{"label":"Active","value":"active"},{"label":"Paused","value":"paused"}]'>
+</ui-select>
+```
+
+Event: `change`.
+
+### Checkbox / Radio / Toggle
+
+- Checkbox: independent choices.
+- Radio: exactly one choice within the same `name`.
+- Toggle: immediate setting change; avoid using it for a multi-step submit flow.
+
+Events: `change`.
+
+### Search
+
+Use for find/filter behavior, not for arbitrary single-line data entry.
+
+```html
+<ui-search placeholder="Search projects"></ui-search>
+```
+
+Event: `input`.
+
+### Tag
+
+Use for compact metadata, status, or applied filter chips.
+
+- Kinds: `neutral`, `info`, `success`, `warning`, `danger`
+- A dismissible tag emits `dismiss`.
+
+### Alert
+
+Use for information that should remain visible in context.
+
+- Kinds: `info`, `success`, `warning`, `danger`
+- A dismissible alert emits `dismiss`.
+- Critical destructive confirmation belongs in a modal, not an alert.
+
+### Tabs
+
+`items` is JSON:
+
+```html
+<ui-tabs
+  active="0"
+  items='[{"label":"Overview","value":"overview"},{"label":"Activity","value":"activity"}]'>
+</ui-tabs>
+```
+
+Event: `change` with `detail: { index, value }`.
+
+Use tabs only for peer views. Do not use them to represent sequential steps.
+
+### Accordion
+
+`items` is JSON:
+
+```html
+<ui-accordion
+  items='[
+    {"title":"Details","content":"Project details"},
+    {"title":"Permissions","content":"Access settings"}
+  ]'>
+</ui-accordion>
+```
+
+Event: `toggle` with `detail: { index, open }`.
+
+### Modal
+
+Use for blocking decisions or short focused tasks.
+
+```html
+<ui-modal heading="Delete project" open>
+  This cannot be undone.
+</ui-modal>
+```
+
+Event: `close`.
+
+- Sizes: `sm`, `md`, `lg`
+- Escape and backdrop click close a dismissible modal.
+- Avoid long documents or complex navigation inside a modal.
+
+### Tooltip
+
+Use for short supplemental help. The main meaning of a control must remain understandable without it.
+
+### Pagination
+
+Event: `change` with `detail: { page, pageSize }`.
+
+Prefer progressive loading when the total is unknown; use pagination when users need stable page boundaries.
+
+### Progress / Skeleton
+
+- `ui-progress`: known numeric progress from `0` to `100`.
+- `ui-skeleton`: unknown loading duration.
+
+Do not show a fake percentage when the system cannot estimate completion.
+
+### Toast
+
+Use for transient success/info/warning/error outcomes that do not require blocking action.
+
+Event: `dismiss`.
+
+## GenUI selection hints
+
+| Intent | Preferred component |
+|---|---|
+| Do something | Button |
+| Choose one from several visible options | Radio |
+| Choose zero or more | Checkbox |
+| Change a binary setting immediately | Toggle |
+| Choose one from a compact list | Select |
+| Enter short text | Text input |
+| Enter long text | Textarea |
+| Filter/find | Search |
+| Group related content | Card |
+| Switch peer views | Tabs |
+| Reveal optional detail | Accordion |
+| Persistent contextual feedback | Alert |
+| Blocking confirmation | Modal |
+| Short transient outcome | Toast |
+| Loading, duration unknown | Skeleton |
+| Loading, completion known | Progress |
+
+## Stable API rule
+
+Attributes, events, and element names in this document are the public GenUI contract. A breaking rename should be treated as a versioned design-system change, not an incidental refactor.
+
+## Carbon reference
+
+Carbon is used as an architectural reference for separation of documentation, implementation, tokens, accessibility, and componentized SCSS. This repository does **not** vendor Carbon source code and intentionally keeps only a common GenUI subset.
