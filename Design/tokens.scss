@@ -1,0 +1,223 @@
+// GenUI design tokens
+// Keep aligned with tokens.js.
+
+$gen-colors: (
+  action-primary: #6c43c6,
+  action-primary-hover: #5f3bae,
+  action-primary-active: #563597,
+  action-secondary: #3571fe,
+  action-danger: #cc1730,
+  text-primary: #161c27,
+  text-secondary: #5f5e60,
+  text-muted: #92908f,
+  text-inverse: #ffffff,
+  surface-base: #ffffff,
+  surface-subtle: #f5f3f1,
+  surface-raised: #ffffff,
+  surface-strong: #e9e7e3,
+  surface-hover: #edeae7,
+  surface-active: #e4e1dd,
+  surface-inverse: #161c27,
+  border-subtle: #c6c4c0,
+  border-strong: #757775,
+  status-info: #3571fe,
+  status-info-surface: #dce7ff,
+  status-success: #1c8843,
+  status-success-surface: #c3f5c8,
+  status-warning: #8c6d00,
+  status-warning-surface: #ffe9a3,
+  status-danger: #cc1730,
+  status-danger-surface: #ffd9dc,
+  focus: #6c43c6
+);
+
+$gen-space: (
+  0: 0,
+  1: 2px,
+  2: 4px,
+  3: 8px,
+  4: 12px,
+  5: 16px,
+  6: 20px,
+  7: 24px,
+  8: 32px,
+  9: 40px,
+  10: 56px
+);
+
+$gen-radius: (
+  sm: 8px,
+  md: 12px,
+  lg: 16px,
+  xl: 24px,
+  pill: 9999px
+);
+
+$gen-control-height: (
+  sm: 32px,
+  md: 40px,
+  lg: 48px
+);
+
+$gen-breakpoint: (
+  md: 672px,
+  lg: 1056px,
+  xl: 1312px
+);
+
+$gen-shadow-1: 0 1px 2px rgba(22, 28, 39, 0.04), 0 1px 3px rgba(22, 28, 39, 0.06);
+$gen-shadow-2: 0 2px 4px rgba(22, 28, 39, 0.05), 0 4px 8px rgba(22, 28, 39, 0.06);
+$gen-shadow-3: 0 4px 8px rgba(22, 28, 39, 0.06), 0 8px 16px rgba(22, 28, 39, 0.08);
+$gen-shadow-focus: 0 0 0 3px rgba(108, 67, 198, 0.32);
+
+$gen-motion-fast: 120ms;
+$gen-motion-base: 200ms;
+$gen-motion-slow: 320ms;
+$gen-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+$gen-ease-out: cubic-bezier(0, 0, 0.2, 1);
+
+@function gen-color($name) {
+  @return map-get($gen-colors, $name);
+}
+
+@function gen-space($step) {
+  @return map-get($gen-space, $step);
+}
+
+@function gen-radius($size) {
+  @return map-get($gen-radius, $size);
+}
+
+@function gen-control-height($size) {
+  @return map-get($gen-control-height, $size);
+}
+
+@mixin gen-focus-ring {
+  outline: 2px solid transparent;
+  box-shadow: var(--gen-shadow-focus);
+}
+
+@mixin gen-label {
+  color: var(--gen-color-text-primary);
+  font: 500 14px/20px var(--gen-font-family-base);
+  letter-spacing: 0.1px;
+}
+
+@mixin gen-body {
+  color: var(--gen-color-text-primary);
+  font: 400 14px/20px var(--gen-font-family-base);
+  letter-spacing: 0.25px;
+}
+
+@mixin gen-control-reset {
+  appearance: none;
+  border: 0;
+  font: inherit;
+  margin: 0;
+}
+
+:root {
+  --gen-color-action-primary: #{map-get($gen-colors, action-primary)};
+  --gen-color-action-primary-hover: #{map-get($gen-colors, action-primary-hover)};
+  --gen-color-action-primary-active: #{map-get($gen-colors, action-primary-active)};
+  --gen-color-action-secondary: #{map-get($gen-colors, action-secondary)};
+  --gen-color-action-danger: #{map-get($gen-colors, action-danger)};
+
+  --gen-color-text-primary: #{map-get($gen-colors, text-primary)};
+  --gen-color-text-secondary: #{map-get($gen-colors, text-secondary)};
+  --gen-color-text-muted: #{map-get($gen-colors, text-muted)};
+  --gen-color-text-inverse: #{map-get($gen-colors, text-inverse)};
+  --gen-color-text-disabled: rgba(22, 28, 39, 0.38);
+
+  --gen-color-surface-base: #{map-get($gen-colors, surface-base)};
+  --gen-color-surface-subtle: #{map-get($gen-colors, surface-subtle)};
+  --gen-color-surface-raised: #{map-get($gen-colors, surface-raised)};
+  --gen-color-surface-strong: #{map-get($gen-colors, surface-strong)};
+  --gen-color-surface-hover: #{map-get($gen-colors, surface-hover)};
+  --gen-color-surface-active: #{map-get($gen-colors, surface-active)};
+  --gen-color-surface-inverse: #{map-get($gen-colors, surface-inverse)};
+  --gen-color-surface-scrim: rgba(0, 0, 0, 0.48);
+  --gen-color-surface-glass: rgba(255, 255, 255, 0.72);
+
+  --gen-color-border-subtle: #{map-get($gen-colors, border-subtle)};
+  --gen-color-border-strong: #{map-get($gen-colors, border-strong)};
+
+  --gen-color-status-info: #{map-get($gen-colors, status-info)};
+  --gen-color-status-info-surface: #{map-get($gen-colors, status-info-surface)};
+  --gen-color-status-success: #{map-get($gen-colors, status-success)};
+  --gen-color-status-success-surface: #{map-get($gen-colors, status-success-surface)};
+  --gen-color-status-warning: #{map-get($gen-colors, status-warning)};
+  --gen-color-status-warning-surface: #{map-get($gen-colors, status-warning-surface)};
+  --gen-color-status-danger: #{map-get($gen-colors, status-danger)};
+  --gen-color-status-danger-surface: #{map-get($gen-colors, status-danger-surface)};
+  --gen-color-focus: #{map-get($gen-colors, focus)};
+
+  --gen-font-family-base: 'Rookery New', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --gen-font-family-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+
+  --gen-space-0: #{map-get($gen-space, 0)};
+  --gen-space-1: #{map-get($gen-space, 1)};
+  --gen-space-2: #{map-get($gen-space, 2)};
+  --gen-space-3: #{map-get($gen-space, 3)};
+  --gen-space-4: #{map-get($gen-space, 4)};
+  --gen-space-5: #{map-get($gen-space, 5)};
+  --gen-space-6: #{map-get($gen-space, 6)};
+  --gen-space-7: #{map-get($gen-space, 7)};
+  --gen-space-8: #{map-get($gen-space, 8)};
+  --gen-space-9: #{map-get($gen-space, 9)};
+  --gen-space-10: #{map-get($gen-space, 10)};
+
+  --gen-radius-sm: #{map-get($gen-radius, sm)};
+  --gen-radius-md: #{map-get($gen-radius, md)};
+  --gen-radius-lg: #{map-get($gen-radius, lg)};
+  --gen-radius-xl: #{map-get($gen-radius, xl)};
+  --gen-radius-pill: #{map-get($gen-radius, pill)};
+
+  --gen-control-height-sm: #{map-get($gen-control-height, sm)};
+  --gen-control-height-md: #{map-get($gen-control-height, md)};
+  --gen-control-height-lg: #{map-get($gen-control-height, lg)};
+
+  --gen-shadow-1: #{$gen-shadow-1};
+  --gen-shadow-2: #{$gen-shadow-2};
+  --gen-shadow-3: #{$gen-shadow-3};
+  --gen-shadow-focus: #{$gen-shadow-focus};
+
+  --gen-motion-fast: #{$gen-motion-fast};
+  --gen-motion-base: #{$gen-motion-base};
+  --gen-motion-slow: #{$gen-motion-slow};
+  --gen-ease-standard: #{$gen-ease-standard};
+  --gen-ease-out: #{$gen-ease-out};
+
+  --gen-z-raised: 10;
+  --gen-z-sticky: 100;
+  --gen-z-dropdown: 1000;
+  --gen-z-overlay: 1200;
+  --gen-z-modal: 1300;
+  --gen-z-toast: 1400;
+  --gen-z-tooltip: 1500;
+}
+
+[data-theme='dark'] {
+  --gen-color-text-primary: #f5f3f1;
+  --gen-color-text-secondary: #c6c4c0;
+  --gen-color-text-muted: #92908f;
+  --gen-color-text-inverse: #161c27;
+
+  --gen-color-surface-base: #161c27;
+  --gen-color-surface-subtle: #202733;
+  --gen-color-surface-raised: #252d3a;
+  --gen-color-surface-strong: #303947;
+  --gen-color-surface-hover: #2b3442;
+  --gen-color-surface-active: #364050;
+
+  --gen-color-border-subtle: #4c5665;
+  --gen-color-border-strong: #7c8795;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --gen-motion-fast: 0ms;
+    --gen-motion-base: 0ms;
+    --gen-motion-slow: 0ms;
+  }
+}
