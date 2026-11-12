@@ -1,23 +1,9 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { BALL, GlassPill, type GlassTarget } from '../glass/GlassPill'
 import { AudioMotionBridge, AudioReactive } from '../glass/liquidGlass.js'
-import {
-  IconCamera,
-  IconCheck,
-  IconClose,
-  IconKeyboard,
-  IconMic,
-  IconSend,
-} from './Icons'
+import { IconCamera, IconCheck, IconKeyboard, IconMic, IconSend } from './Icons'
 
-export type PillState = 'idle' | 'listening' | 'typing' | 'working' | 'confirm' | 'camera' | 'done'
-
-export interface JobView {
-  title: string
-  progress: number
-  stepLabel: string
-  agents: { name: string; active: boolean; done: boolean }[]
-}
+export type PillState = 'listening' | 'typing' | 'camera' | 'confirm' | 'caption'
 
 export interface ConfirmView {
   title: string
@@ -28,24 +14,25 @@ export interface ConfirmView {
 
 interface Props {
   state: PillState
+  busy: boolean
+  micOn: boolean
   input: string
   onInput: (v: string) => void
   onSubmit: () => void
   onCancel: () => void
-  onActivate: () => void
+  onTapBall: () => void
   onOpenCamera: () => void
-  onStartListening: () => void
-  onTranscriptDone: (text: string) => void
-  job: JobView | null
+  onUseMic: () => void
   awaitingConfirm: boolean
   confirm: ConfirmView | null
   onConfirm: (selected: string[]) => void
   onDefer: () => void
-  doneText: string
-  onOpenDone: () => void
-  cameraQuestion: string
-  onCameraAction: (action: 'add' | 'close') => void
+  caption: string
+  onCaptionClick: () => void
 }
+
+const BOTTOM = 40
+const BACKDROP = '/bg.jpg'
 
 function useViewport() {
   const [w, setW] = useState(() => window.innerWidth)
@@ -57,48 +44,56 @@ function useViewport() {
   return w
 }
 
-const transcriptScript = ['嗯…', '帮我看看', '帮我看看这副耳机', '帮我看看这副耳机是什么型号？']
-
-function Orb({ size = 22, spinning = false }: { size?: number; spinning?: boolean }) {
-  return <span className={`orb ${spinning ? 'is-spinning' : ''}`} style={{ width: size, height: size }} />
+let measureCtx: CanvasRenderingContext2D | null = null
+function textWidth(text: string) {
+  measureCtx ??= document.createElement('canvas').getContext('2d')
+  if (!measureCtx) return text.length * 7.5
+  measureCtx.font = '500 14px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif'
+  return measureCtx.measureText(text).width
 }
 
-function Listening({ onDone }: { onDone: (t: string) => void }) {
-  const [i, setI] = useState(0)
-  useEffect(() => {
-    if (i >= transcriptScript.length) {
-      const t = setTimeout(() => onDone(transcriptScript[transcriptScript.length - 1]), 700)
-      return () => clearTimeout(t)
+interface Form {
+  glass: GlassTarget & { width: number; height: number }
+  inset: number
+}
+
+function formFor(p: { state: PillState; vw: number; hover: boolean; busy: boolean; caption: string }): Form {
+  const fit = (w: number) => Math.min(w, p.vw - 48)
+  switch (p.state) {
+    case 'listening': {
+      const s = p.hover ? 68 : 60
+      const busy = p.busy ? { glow: 90, glowMix: 100, liquid: 26 } : {}
+      return { glass: { ...BALL, width: s, height: s, radius: 30, ...busy }, inset: 0 }
     }
-    const t = setTimeout(() => setI(i + 1), i === 0 ? 900 : 650)
-    return () => clearTimeout(t)
-  }, [i, onDone])
-  return (
-    <>
-      <div className="pill-transcript" key="transcript">
-        <span className="pill-transcript-label">正在聆听</span>
-        {i === 0 ? <span className="muted">请说…</span> : transcriptScript[i - 1]}
-        <span className="caret" />
-      </div>
-    </>
-  )
+    case 'typing':
+      return { glass: { ...BALL, width: fit(680), height: 60, radius: 30, glow: 0, liquid: 0 }, inset: 0 }
+    case 'camera':
+      return { glass: { ...BALL, width: fit(412), height: 312, radius: 32, liquid: 0, edge: 1 }, inset: 6 }
+    case 'confirm':
+      return { glass: { ...BALL, width: fit(432), height: 256, radius: 36, liquid: 0, edge: 1 }, inset: 6 }
+    case 'caption': {
+      const w = Math.max(180, Math.min(fit(640), Math.ceil(textWidth(p.caption)) + 56))
+      return { glass: { ...BALL, width: w, height: 52, radius: 26, glow: 55, liquid: 0 }, inset: 0 }
+    }
+  }
 }
 
-function Camera({ question, onAction }: { question: string; onAction: (a: 'add' | 'close') => void }) {
+function Orb({ size = 22 }: { size?: number }) {
+  return <span className="orb" style={{ width: size, height: size }} />
+}
+
+function Camera() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [live, setLive] = useState(false)
-  const [phase, setPhase] = useState<'scan' | 'found' | 'answer'>('scan')
+  const [label, setLabel] = useState<string | null>(null)
 
   useEffect(() => {
     let stream: MediaStream | null = null
     let cancelled = false
     navigator.mediaDevices
-      ?.getUserMedia({ video: { facingMode: 'environment' } })
+      ?.getUserMedia({ video: { facingMode: 'user' }, audio: false })
       .then((s) => {
-        if (cancelled) {
-          s.getTracks().forEach((t) => t.stop())
-          return
-        }
+        if (cancelled) return s.getTracks().forEach((t) => t.stop())
         stream = s
         if (videoRef.current) {
           videoRef.current.srcObject = s
@@ -106,8 +101,8 @@ function Camera({ question, onAction }: { question: string; onAction: (a: 'add' 
         }
       })
       .catch(() => setLive(false))
-    const t1 = setTimeout(() => setPhase('found'), 1600)
-    const t2 = setTimeout(() => setPhase('answer'), 2800)
+    const t1 = setTimeout(() => setLabel('Recognizing…'), 900)
+    const t2 = setTimeout(() => setLabel('Sony WH-1000XM5'), 2200)
     return () => {
       cancelled = true
       clearTimeout(t1)
@@ -131,42 +126,11 @@ function Camera({ question, onAction }: { question: string; onAction: (a: 'add' 
           </svg>
         </div>
       )}
-      <div className="camera-top">
-        <span className="camera-chip">
-          <i className="dot is-live" />
-          {question || '对准你想问的物品'}
+      {label && (
+        <span className={`camera-tag ${label.endsWith('…') ? 'is-pending' : ''}`} key={label}>
+          <i />
+          {label}
         </span>
-        <button className="camera-close" onClick={() => onAction('close')} aria-label="关闭取景框">
-          <IconClose size={14} />
-        </button>
-      </div>
-      <div className="camera-frame" aria-hidden>
-        <i className="tl" />
-        <i className="tr" />
-        <i className="bl" />
-        <i className="br" />
-        {phase === 'scan' && <span className="camera-scanline" />}
-      </div>
-      {phase !== 'scan' && (
-        <div className="camera-target">
-          <span>{phase === 'found' ? '识别中…' : '头戴式耳机 · 98%'}</span>
-        </div>
-      )}
-      {phase === 'answer' && (
-        <div className="camera-answer">
-          <div className="camera-answer-head">
-            <Orb size={16} />
-            <strong>Sony WH-1000XM5</strong>
-            <span>参考价 ¥2,499</span>
-          </div>
-          <p>头戴式主动降噪耳机，30 小时续航，正是你在跟进的竞品之一。</p>
-          <div className="camera-answer-actions">
-            <button onClick={() => onAction('add')}>加入竞品分析</button>
-            <button className="is-ghost" onClick={() => onAction('close')}>
-              完成
-            </button>
-          </div>
-        </div>
       )}
     </div>
   )
@@ -191,7 +155,7 @@ function Confirm({
       <div className="confirm-head">
         <Orb size={20} />
         <div>
-          <span className="confirm-eyebrow">需要你确认 · 任务已暂停</span>
+          <span className="confirm-eyebrow">Needs your confirmation · task paused</span>
           <strong>{view.title}</strong>
         </div>
       </div>
@@ -206,51 +170,18 @@ function Confirm({
       </div>
       <div className="confirm-actions">
         <button className="btn-ghost" onClick={onDefer}>
-          稍后处理
+          Later
         </button>
         <button className="btn-primary" disabled={selected.length === 0} onClick={() => onConfirm(selected)}>
-          确认并继续
+          Confirm
         </button>
       </div>
     </div>
   )
 }
 
-const BOTTOM = 40
-const BACKDROP = '/bg.jpg'
-
-interface Form {
-  glass: GlassTarget & { width: number; height: number }
-  inset: number
-}
-
-function formFor(state: PillState, vw: number, hover: boolean): Form {
-  const fit = (w: number) => Math.min(w, vw - 48)
-  switch (state) {
-    case 'idle': {
-      const s = hover ? 68 : 60
-      return { glass: { ...BALL, width: s, height: s, radius: 30 }, inset: 0 }
-    }
-    case 'listening':
-      return { glass: { ...BALL, width: 112, height: 60, radius: 30, liquid: 30, glow: 92, glowMix: 100 }, inset: 0 }
-    case 'typing':
-      return { glass: { ...BALL, width: fit(680), height: 60, radius: 30, glow: 0, liquid: 0 }, inset: 0 }
-    case 'working':
-      return { glass: { ...BALL, width: fit(400), height: 60, radius: 30, glow: 70, liquid: 0 }, inset: 0 }
-    case 'done':
-      return {
-        glass: { ...BALL, width: fit(352), height: 60, radius: 30, glow: 60, liquid: 0, hue1: 140, hue2: 168, hue3: 100 },
-        inset: 0,
-      }
-    case 'confirm':
-      return { glass: { ...BALL, width: fit(432), height: 256, radius: 36, liquid: 0, edge: 1 }, inset: 6 }
-    case 'camera':
-      return { glass: { ...BALL, width: fit(392), height: 352, radius: 32, liquid: 0, edge: 1 }, inset: 6 }
-  }
-}
-
 export function AgentPill(props: Props) {
-  const { state, job } = props
+  const { state } = props
   const vw = useViewport()
   const [hover, setHover] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -274,9 +205,11 @@ export function AgentPill(props: Props) {
     }
   }, [])
 
-  const form = formFor(state, vw, hover && state === 'idle')
-  const cw = form.glass.width - form.inset * 2
-  const ch = form.glass.height - form.inset * 2
+  const form = useMemo(
+    () => formFor({ state, vw, hover: hover && state === 'listening', busy: props.busy, caption: props.caption }),
+    [state, vw, hover, props.busy, props.caption],
+  )
+  const box = { width: form.glass.width - form.inset * 2, height: form.glass.height - form.inset * 2 }
 
   useLayoutEffect(() => {
     glassRef.current?.hideContent()
@@ -284,67 +217,50 @@ export function AgentPill(props: Props) {
 
   useEffect(() => {
     glassRef.current?.setTarget(form.glass)
-  })
+  }, [form])
 
-  // Listening: the live microphone level drives the glass motion, like the
-  // original agent ball. Without mic permission a soft synthetic voice stands in.
+  // A live microphone drives the ball's motion while it listens, like the original agent ball.
   useEffect(() => {
-    if (state !== 'listening') return
+    if (state !== 'listening' || !props.micOn) return
     const bridge = new AudioMotionBridge(glassRef.current?.renderer ?? null)
     bridge.setStrength(100)
-    let sim: ReturnType<typeof setInterval> | undefined
-    const simulate = () => {
-      if (sim) return
-      let t = 0
-      sim = setInterval(() => {
-        t += 0.05
-        const syllable = Math.max(0, Math.sin(t * 7)) * (0.6 + 0.4 * Math.sin(t * 1.3))
-        bridge.setInput({ level: 0.15 + 0.45 * syllable }, true)
-      }, 50)
-    }
-    const audio = new AudioReactive(
-      (l) => bridge.setInput(l, true),
-      (s) => s.type === 'error' && simulate(),
-    )
+    const audio = new AudioReactive((l) => bridge.setInput(l, true))
     audio.setSensitivity(153)
     audio.startMicrophone()
     return () => {
-      if (sim) clearInterval(sim)
       audio.dispose()
       bridge.dispose()
     }
-  }, [state])
+  }, [state, props.micOn])
 
   useEffect(() => {
-    if (state === 'typing') {
-      const el = inputRef.current
-      if (el) {
-        el.focus()
-        const n = el.value.length
-        el.setSelectionRange(n, n)
-      }
-    }
+    if (state !== 'typing') return
+    const el = inputRef.current
+    if (!el) return
+    el.focus()
+    el.setSelectionRange(el.value.length, el.value.length)
   }, [state])
 
-  const box = { width: cw, height: ch }
+  const tappable = state === 'listening' || state === 'caption'
 
   return (
     <>
       <canvas ref={canvasRef} className="glass-canvas" aria-hidden />
       <div ref={wrapRef} className={`pill-wrap state-${state}`}>
-        {state === 'listening' && <Listening onDone={props.onTranscriptDone} />}
-        {state === 'idle' && <div className="pill-hint">点击说话 · 直接敲键盘输入</div>}
+        {state === 'listening' && (
+          <div className="pill-hint">{props.micOn ? 'Listening…' : 'Tap or start typing'}</div>
+        )}
 
         <div
           ref={shellRef}
-          className={`pill-shell ${state === 'idle' || state === 'listening' ? 'is-tappable' : ''}`}
+          className={`pill-shell ${tappable ? 'is-tappable' : ''}`}
           role="region"
-          aria-label="Agent 状态"
-          onClick={state === 'idle' || state === 'listening' ? props.onActivate : undefined}
+          aria-label="Agent"
+          onClick={state === 'listening' ? props.onTapBall : state === 'caption' ? props.onCaptionClick : undefined}
           onMouseEnter={() => setHover(true)}
           onMouseLeave={() => setHover(false)}
         >
-          {state === 'idle' && props.awaitingConfirm && <span className="pill-badge" />}
+          {state === 'listening' && props.awaitingConfirm && <span className="pill-badge" />}
 
           {state === 'typing' && (
             <form
@@ -360,41 +276,24 @@ export function AgentPill(props: Props) {
                 value={props.input}
                 onChange={(e) => props.onInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Escape' && props.onCancel()}
-                placeholder="问点什么，或让 Agent 帮你完成一件事…"
-                aria-label="输入指令"
+                placeholder="Ask anything, or tell the agent what to do…"
+                aria-label="Message"
               />
-              <button type="button" className="pill-icon" onClick={props.onStartListening} title="语音输入">
+              <button type="button" className="pill-icon" onClick={props.onUseMic} title="Voice">
                 <IconMic size={17} />
               </button>
-              <button type="button" className="pill-icon" onClick={props.onOpenCamera} title="拍照提问">
+              <button type="button" className="pill-icon" onClick={props.onOpenCamera} title="Camera">
                 <IconCamera size={17} />
               </button>
-              <button type="submit" className="pill-send" disabled={!props.input.trim()} title="发送">
+              <button type="submit" className="pill-send" disabled={!props.input.trim()} title="Send">
                 <IconSend size={16} />
               </button>
             </form>
           )}
 
-          {state === 'working' && job && (
-            <div className="pill-content pill-working" style={box}>
-              <div className="working-text">
-                <strong>{job.title}</strong>
-                <span>{job.stepLabel}</span>
-              </div>
-              <div className="working-agents">
-                {job.agents.map((a) => (
-                  <span
-                    key={a.name}
-                    className={`${a.active ? 'is-active' : ''} ${a.done ? 'is-done' : ''}`}
-                    title={a.name}
-                  >
-                    {a.name.slice(0, 1)}
-                  </span>
-                ))}
-              </div>
-              <i className="working-track">
-                <b style={{ width: `${job.progress}%` }} />
-              </i>
+          {state === 'camera' && (
+            <div className="pill-content pill-card is-camera" style={box}>
+              <Camera />
             </div>
           )}
 
@@ -404,19 +303,9 @@ export function AgentPill(props: Props) {
             </div>
           )}
 
-          {state === 'camera' && (
-            <div className="pill-content pill-card is-camera" style={box}>
-              <Camera question={props.cameraQuestion} onAction={props.onCameraAction} />
-            </div>
-          )}
-
-          {state === 'done' && (
-            <div className="pill-content pill-done" style={box}>
-              <span className="done-check">
-                <IconCheck size={15} />
-              </span>
-              <strong>{props.doneText}</strong>
-              <button onClick={props.onOpenDone}>查看</button>
+          {state === 'caption' && (
+            <div className="pill-content pill-caption" style={box}>
+              <span key={props.caption}>{props.caption}</span>
             </div>
           )}
         </div>
@@ -424,9 +313,9 @@ export function AgentPill(props: Props) {
         {state === 'typing' && (
           <div className="pill-shortcuts">
             <span>
-              <IconKeyboard size={12} /> Enter 发送
+              <IconKeyboard size={12} /> Enter to send
             </span>
-            <span>Esc 收起</span>
+            <span>Esc to close</span>
           </div>
         )}
       </div>

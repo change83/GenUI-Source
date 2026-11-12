@@ -60,9 +60,9 @@ p {
 /* ---------- Glass primitives ---------- */
 
 .glass-panel {
-  background: rgba(255, 255, 255, 0.28);
-  backdrop-filter: blur(var(--blur-window)) saturate(1.3);
-  -webkit-backdrop-filter: blur(var(--blur-window)) saturate(1.3);
+  background: rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(50px) saturate(1.3);
+  -webkit-backdrop-filter: blur(50px) saturate(1.3);
   border: 1px solid rgba(255, 255, 255, 0.45);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), var(--elevation-4);
 }
@@ -99,17 +99,17 @@ p {
   background: rgba(255, 255, 255, 0.4);
 }
 
+.topbar button.is-off {
+  background: rgba(255, 255, 255, 0.75);
+  color: var(--color-primary);
+}
+
 /* ---------- Stage ---------- */
 
 .stage {
-  position: relative;
+  position: fixed;
+  inset: 0;
   z-index: 1;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 56px;
-  padding: 72px 32px 150px;
   transition:
     filter var(--duration-slow) var(--ease-standard),
     transform var(--duration-slow) var(--ease-standard),
@@ -122,6 +122,23 @@ p {
   opacity: 0.75;
 }
 
+/* The dynamic area is a flex sibling of the pinned panel: top-aligned, fixed gap, moves with it. */
+.group {
+  position: absolute;
+  display: flex;
+  align-items: flex-start;
+}
+
+.group.is-moving {
+  user-select: none;
+}
+
+.dismiss-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+}
+
 /* ---------- Pinned area ---------- */
 
 .pinned {
@@ -130,28 +147,32 @@ p {
   border-radius: 30px;
 }
 
-.pinned-toolbar {
-  position: absolute;
-  left: 8px;
-  right: 8px;
-  top: -30px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: rgba(255, 255, 255, 0.92);
-  font-size: 12px;
-  letter-spacing: 0.25px;
-  font-weight: 500;
-  text-shadow: 0 1px 6px rgba(120, 30, 40, 0.3);
+.pinned {
+  cursor: grab;
+}
+
+.pinned.is-moving {
+  cursor: grabbing;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), var(--elevation-5);
+}
+
+.pinned.is-editing {
+  cursor: default;
 }
 
 .pinned-edit {
+  position: absolute;
+  right: 10px;
+  top: -34px;
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 3px 10px;
+  padding: 4px 11px;
+  font-size: 12px;
+  font-weight: 500;
   border-radius: var(--radius-pill);
   background: rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(16px);
   color: #fff;
   opacity: 0;
   transition: opacity var(--duration-base) var(--ease-standard);
@@ -647,11 +668,13 @@ p {
 
 /* ---------- Output thumbnails ---------- */
 
-.thumb-headphones {
+.thumb-poster {
   width: 100%;
   height: 100%;
   display: block;
-  background: linear-gradient(170deg, #fbf7f3 0%, #f1e7de 60%, #ecd9cd 100%);
+  object-fit: cover;
+  object-position: center top;
+  background: #f4ece6;
 }
 
 .thumb-report,
@@ -820,9 +843,9 @@ p {
 .card {
   position: relative;
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(var(--blur-window)) saturate(1.4);
-  -webkit-backdrop-filter: blur(var(--blur-window)) saturate(1.4);
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(50px) saturate(1.4);
+  -webkit-backdrop-filter: blur(50px) saturate(1.4);
   border: 1px solid rgba(255, 255, 255, 0.55);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), var(--elevation-3);
   transition:
@@ -1588,6 +1611,10 @@ p {
   opacity: 1;
 }
 
+.pill-camera video {
+  transform: scaleX(-1);
+}
+
 .camera-sim {
   position: absolute;
   inset: 0;
@@ -1621,225 +1648,58 @@ p {
   }
 }
 
-.camera-top {
+.camera-tag {
   position: absolute;
-  top: 12px;
-  left: 12px;
-  right: 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  z-index: 2;
-}
-
-.camera-chip {
+  left: 50%;
+  bottom: 14px;
+  translate: -50% 0;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  padding: 5px 10px;
+  gap: 7px;
+  padding: 6px 13px;
   border-radius: var(--radius-pill);
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(10px);
-}
-
-.camera-close {
-  width: 28px;
-  height: 28px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.45);
-  color: #fff;
-}
-
-.camera-frame {
-  position: absolute;
-  inset: 54px 40px 70px;
-}
-
-.camera-frame i {
-  position: absolute;
-  width: 26px;
-  height: 26px;
-  border: 3px solid #fff;
-  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.4));
-}
-
-.camera-frame .tl {
-  top: 0;
-  left: 0;
-  border-right: 0;
-  border-bottom: 0;
-  border-top-left-radius: 12px;
-}
-
-.camera-frame .tr {
-  top: 0;
-  right: 0;
-  border-left: 0;
-  border-bottom: 0;
-  border-top-right-radius: 12px;
-}
-
-.camera-frame .bl {
-  bottom: 0;
-  left: 0;
-  border-right: 0;
-  border-top: 0;
-  border-bottom-left-radius: 12px;
-}
-
-.camera-frame .br {
-  bottom: 0;
-  right: 0;
-  border-left: 0;
-  border-top: 0;
-  border-bottom-right-radius: 12px;
-}
-
-.camera-scanline {
-  position: absolute;
-  left: 8px;
-  right: 8px;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, #b89bff, #fff, #7fb0ff, transparent);
-  box-shadow: 0 0 14px #9b6bff;
-  animation: scan 1.4s ease-in-out infinite alternate;
-}
-
-@keyframes scan {
-  from {
-    top: 6%;
-  }
-  to {
-    top: 94%;
-  }
-}
-
-.camera-target {
-  position: absolute;
-  left: 22%;
-  right: 22%;
-  top: 32%;
-  bottom: 30%;
-  border: 2px solid rgba(255, 255, 255, 0.9);
-  border-radius: 14px;
-  box-shadow:
-    0 0 0 2000px rgba(0, 0, 0, 0.18),
-    0 0 18px rgba(155, 107, 255, 0.8);
-  animation: pop-in 420ms var(--ease-spring) both;
-}
-
-.camera-target span {
-  position: absolute;
-  top: -12px;
-  left: 50%;
-  translate: -50% 0;
+  font-size: 12.5px;
+  font-weight: 500;
   white-space: nowrap;
-  font-size: 11px;
-  font-weight: 500;
-  padding: 2px 8px;
-  border-radius: var(--radius-pill);
-  background: var(--color-primary);
-}
-
-.camera-answer {
-  position: absolute;
-  left: 10px;
-  right: 10px;
-  bottom: 10px;
-  padding: 12px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(16px);
-  color: var(--color-on-surface);
-  animation: fade-up 360ms var(--ease-spring) both;
-}
-
-.camera-answer-head {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.camera-answer-head strong {
-  font-size: 13.5px;
-}
-
-.camera-answer-head span {
-  margin-left: auto;
-  font-size: 11px;
-  color: var(--color-on-surface-variant);
-}
-
-.camera-answer p {
-  font-size: 12px;
-  line-height: 1.45;
-  color: var(--color-on-surface-variant);
-  margin: 6px 0 10px;
-}
-
-.camera-answer-actions {
-  display: flex;
-  gap: 6px;
-}
-
-.camera-answer-actions button {
-  flex: 1;
-  font-size: 12px;
-  font-weight: 500;
-  padding: 7px;
-  border-radius: var(--radius-pill);
-  background: var(--color-primary);
   color: #fff;
+  background: rgba(20, 16, 28, 0.45);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  animation: fade-up 320ms var(--ease-spring) both;
 }
 
-.camera-answer-actions .is-ghost {
-  background: var(--color-surface-container);
-  color: var(--color-on-surface);
+.camera-tag i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #6ee7a8;
+  box-shadow: 0 0 8px #6ee7a8;
 }
 
-/* done */
+.camera-tag.is-pending i {
+  background: #fff;
+  box-shadow: none;
+  animation: blink 0.9s steps(2) infinite;
+}
 
-.pill-done {
+/* caption */
+
+.pill-caption {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 0 10px 0 14px;
-  text-shadow: 0 1px 8px rgba(20, 60, 30, 0.45);
-}
-
-.done-check {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: #fff;
-  color: var(--color-success);
-  flex: none;
-  animation: pop-in 480ms 260ms var(--ease-spring) both;
-}
-
-.pill-done strong {
-  flex: 1;
-  min-width: 0;
-  font-size: 13.5px;
+  justify-content: center;
+  padding: 0 28px;
+  font-size: 14px;
   font-weight: 500;
+  text-shadow: 0 1px 8px rgba(60, 10, 30, 0.5);
+}
+
+.pill-caption span {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.pill-done button {
-  font-size: 12.5px;
-  font-weight: 500;
-  padding: 9px 16px;
-  border-radius: var(--radius-pill);
-  background: #fff;
-  color: var(--color-on-surface);
-  text-shadow: none;
+  animation: fade-up 260ms var(--ease-out) both;
 }
 
 /* ---------- Demo panel ---------- */
@@ -1983,16 +1843,6 @@ p {
 @media (max-width: 1080px) {
   body {
     overflow: auto;
-  }
-  .stage {
-    flex-direction: column;
-    height: auto;
-    gap: 48px;
-    padding-top: 96px;
-    padding-bottom: 200px;
-  }
-  .pinned-grid {
-    max-height: none;
   }
   .demo-panel {
     top: 16px;

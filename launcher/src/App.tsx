@@ -1,8 +1,16 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent } from 'react'
 import { AgentPill, type ConfirmView, type PillState } from './components/AgentPill'
 import { Background } from './components/Background'
 import { FeedArea } from './components/FeedArea'
-import { IconArchive, IconClose, IconGauge, IconPin, IconUser } from './components/Icons'
+import {
+  IconArchive,
+  IconClose,
+  IconGauge,
+  IconPin,
+  IconUser,
+  IconVolume,
+  IconVolumeOff,
+} from './components/Icons'
 import { OutputThumb } from './components/OutputThumb'
 import { PinnedArea } from './components/PinnedArea'
 import {
@@ -26,54 +34,98 @@ interface Job {
   confirmed: boolean
 }
 
-const AGENTS = ['检索 Agent', '分析 Agent', '设计 Agent', '校对 Agent']
-const STEPS = ['理解需求', '检索资料', '分析整理', '生成产出', '校对润色']
+type Mode = 'auto' | 'typing' | 'camera'
+
+const STEPS = ['Understanding your request', 'Searching sources', 'Analyzing findings', 'Drafting the deliverable', 'Polishing the result']
 const CONFIRM_AT = 42
+const GROUP_GAP = 80
 
 function confirmFor(kind: OutputKind, title: string): ConfirmView | null {
   if (kind === 'report')
     return {
       title,
-      question: '报告将对比以下竞品，是否需要调整？',
-      options: ['Sony WH-1000XM5', 'Bose QC Ultra', 'AirPods Max', '华为 FreeBuds Pro 4'],
+      question: 'The report will compare these competitors. Any changes?',
+      options: ['Sony WH-1000XM5', 'Bose QC Ultra', 'AirPods Max', 'Huawei FreeBuds Pro 4'],
       multi: true,
     }
   if (kind === 'web')
     return {
       title,
-      question: '产品介绍页使用哪种视觉风格？',
-      options: ['极简留白', '科技暗色', '活力渐变'],
+      question: 'Which visual style should the product page use?',
+      options: ['Minimal', 'Dark tech', 'Vivid gradient'],
       multi: false,
     }
   return null
 }
 
 function guessKind(text: string): OutputKind {
-  if (/网页|网站|页面|web|demo/i.test(text)) return 'web'
-  if (/海报|图片|设计|poster/i.test(text)) return 'poster'
+  if (/web|page|site|landing|demo/i.test(text)) return 'web'
+  if (/poster|image|banner|design/i.test(text)) return 'poster'
   return 'report'
+}
+
+function outputTitle(text: string) {
+  const t = text.replace(/^(please\s+)?(generate|create|make|write|build)\s+(a|an|the)?\s*/i, '').replace(/[.。]$/, '')
+  const s = t.charAt(0).toUpperCase() + t.slice(1)
+  return s.length > 44 ? `${s.slice(0, 42)}…` : s
+}
+
+function speak(text: string) {
+  const synth = window.speechSynthesis
+  if (!synth) return
+  synth.cancel()
+  const u = new SpeechSynthesisUtterance(text)
+  u.lang = 'en-US'
+  synth.speak(u)
 }
 
 export default function App() {
   const [widgets, setWidgets] = useState<Widget[]>(initialWidgets)
   const [outputs, setOutputs] = useState<Output[]>(initialOutputs)
-  const [pill, setPill] = useState<PillState>('idle')
+  const [mode, setMode] = useState<Mode>('auto')
   const [input, setInput] = useState('')
   const [job, setJob] = useState<Job | null>(null)
-  const [doneOutput, setDoneOutput] = useState<Output | null>(null)
+  const [deferred, setDeferred] = useState(false)
+  const [muted, setMuted] = useState(false)
+  const [micOn, setMicOn] = useState(false)
+  const [flash, setFlash] = useState<{ text: string; outputId?: string } | null>(null)
   const [preview, setPreview] = useState<Output | null>(null)
-  const [cameraQuestion, setCameraQuestion] = useState('')
-  const pillRef = useRef(pill)
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null)
+  const [moving, setMoving] = useState(false)
+  const groupRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    pillRef.current = pill
-  }, [pill])
+    if (muted) window.speechSynthesis?.cancel()
+  }, [muted])
 
   const awaitingConfirm = !!job && !!job.confirm && !job.confirmed && job.progress >= CONFIRM_AT
+  const step = job ? STEPS[Math.min(STEPS.length - 1, Math.floor((job.progress / 100) * STEPS.length))] : ''
+  const caption = flash?.text ?? (muted && job && !awaitingConfirm ? `${step}… ${Math.round(job.progress)}%` : '')
 
-  const restState = useCallback((): PillState => {
-    if (job && !awaitingConfirm) return 'working'
-    return 'idle'
-  }, [job, awaitingConfirm])
+  const pill: PillState =
+    mode === 'typing'
+      ? 'typing'
+      : mode === 'camera'
+        ? 'camera'
+        : awaitingConfirm && !deferred
+          ? 'confirm'
+          : caption
+            ? 'caption'
+            : 'listening'
+
+  /** Agent feedback is spoken; with the speaker off it becomes a one-line caption. */
+  const announce = useCallback(
+    (text: string, outputId?: string) => {
+      if (muted) setFlash({ text, outputId })
+      else speak(text)
+    },
+    [muted],
+  )
+
+  useEffect(() => {
+    if (!flash) return
+    const t = setTimeout(() => setFlash(null), 5000)
+    return () => clearTimeout(t)
+  }, [flash])
 
   const startJob = useCallback(
     (title: string, kind: OutputKind, opts: { taskId?: string; ask?: boolean; progress?: number } = {}) => {
@@ -86,10 +138,13 @@ export default function App() {
         confirm: opts.ask === false ? null : confirmFor(kind, title),
         confirmed: false,
       })
+      setDeferred(false)
       setInput('')
-      setPill('working')
+      setMode('auto')
+      setFlash(null)
+      if (!muted) speak("On it. I'll let you know when it's ready.")
     },
-    [],
+    [muted],
   )
 
   // Job simulation: advances while the agent is not blocked on the user.
@@ -97,57 +152,96 @@ export default function App() {
     if (!job || awaitingConfirm) return
     const t = setTimeout(() => {
       const progress = Math.min(100, job.progress + 1.1)
-      if (job.confirm && !job.confirmed && progress >= CONFIRM_AT) {
-        setJob({ ...job, progress })
-        if (pillRef.current === 'working') setPill('confirm')
-        return
-      }
-      if (progress < 100) {
+      if (progress < 100 || (job.confirm && !job.confirmed && progress >= CONFIRM_AT)) {
         setJob({ ...job, progress })
         return
       }
       const output: Output = {
         id: `o-${job.id}`,
         kind: job.kind,
-        title: job.title.replace(/^(帮我|请|生成一份|生成一个|生成)/, '').slice(0, 22),
-        subtitle: job.kind === 'web' ? 'Web Demo' : job.kind === 'poster' ? 'PNG' : 'PDF 文件 · 12 页',
-        createdAt: '刚刚',
+        title: outputTitle(job.title),
+        subtitle: job.kind === 'web' ? 'Web Demo' : job.kind === 'poster' ? 'PNG' : 'PDF File · 12 pages',
+        createdAt: 'Just now',
         unread: true,
       }
       setOutputs((o) => [output, ...o])
-      setDoneOutput(output)
       setJob(null)
-      if (pillRef.current === 'working' || pillRef.current === 'idle') setPill('done')
+      announce(`“${output.title}” is ready. Tap to view.`, output.id)
     }, 90)
     return () => clearTimeout(t)
-  }, [job, awaitingConfirm])
+  }, [job, awaitingConfirm, announce])
 
-  useEffect(() => {
-    if (pill !== 'done') return
-    const t = setTimeout(() => setPill('idle'), 6000)
-    return () => clearTimeout(t)
-  }, [pill])
-
-  // Any printable keystroke morphs the pill into the input bar.
+  // Any printable keystroke morphs the ball into the input bar.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement
       if (target.closest('input, textarea, [contenteditable]')) return
       if (e.key === 'Escape') {
         if (preview) return setPreview(null)
-        if (pill === 'typing' || pill === 'listening' || pill === 'camera') setPill(restState())
+        setMode('auto')
         return
       }
       if (e.metaKey || e.ctrlKey || e.altKey || e.key.length !== 1) return
       if (pill === 'confirm' || pill === 'camera') return
       e.preventDefault()
-      // Keys pressed mid-morph, before the input takes focus, must not be dropped.
-      setInput((v) => (pill === 'typing' ? v + e.key : e.key))
-      setPill('typing')
+      setInput((v) => (mode === 'typing' ? v + e.key : e.key))
+      setMode('typing')
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [pill, preview, restState])
+  }, [pill, mode, preview])
+
+  // Center the pinned + dynamic group once, then keep it on screen as the window changes.
+  const clamp = useCallback((p: { x: number; y: number }) => {
+    const pinned = groupRef.current?.firstElementChild as HTMLElement | null
+    const w = pinned?.offsetWidth ?? 0
+    const h = pinned?.offsetHeight ?? 0
+    return {
+      x: Math.max(8, Math.min(window.innerWidth - w - 8, p.x)),
+      y: Math.max(8, Math.min(window.innerHeight - h - 8, p.y)),
+    }
+  }, [])
+
+  useLayoutEffect(() => {
+    const g = groupRef.current
+    if (!g || pos) return
+    const x = (window.innerWidth - g.offsetWidth) / 2
+    const y = (window.innerHeight - g.offsetHeight) / 2 - 40
+    setPos(clamp({ x, y }))
+  }, [pos, clamp])
+
+  useEffect(() => {
+    const onResize = () => setPos((p) => (p ? clamp(p) : p))
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [clamp])
+
+  const grab = (e: PointerEvent<HTMLElement>) => {
+    if (e.button !== 0 || !pos) return
+    const start = { x: e.clientX, y: e.clientY }
+    const origin = { ...pos }
+    let started = false
+    const move = (ev: globalThis.PointerEvent) => {
+      const dx = ev.clientX - start.x
+      const dy = ev.clientY - start.y
+      if (!started && Math.hypot(dx, dy) < 4) return
+      if (!started) {
+        started = true
+        setMoving(true)
+      }
+      ev.preventDefault()
+      setPos(clamp({ x: origin.x + dx, y: origin.y + dy }))
+    }
+    const up = () => {
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointercancel', up)
+      setMoving(false)
+    }
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', up)
+    window.addEventListener('pointercancel', up)
+  }
 
   const openOutput = (o: Output) => {
     setOutputs((list) => list.map((x) => (x.id === o.id ? { ...x, unread: false } : x)))
@@ -162,46 +256,32 @@ export default function App() {
 
   const runTask = (t: RecommendedTask) => startJob(t.title, t.outputKind, { taskId: t.id })
 
-  const handleTranscriptDone = useCallback((text: string) => {
-    setCameraQuestion(text)
-    setPill('camera')
-  }, [])
-
-  const stepIndex = job ? Math.min(STEPS.length - 1, Math.floor((job.progress / 100) * STEPS.length)) : 0
-  const activeAgent = job ? Math.min(AGENTS.length - 1, Math.floor((job.progress / 100) * AGENTS.length)) : 0
-  const jobView = job && {
-    title: job.title,
-    progress: job.progress,
-    stepLabel: `${AGENTS[activeAgent].replace(' Agent', '')}协作中 · ${STEPS[stepIndex]} ${stepIndex + 1}/${STEPS.length}`,
-    agents: AGENTS.map((name, i) => ({ name, active: i === activeAgent, done: i < activeAgent })),
-  }
-
   const demo: { state: PillState; label: string; run: () => void }[] = [
-    { state: 'idle', label: '待机', run: () => setPill('idle') },
-    { state: 'listening', label: '聆听', run: () => setPill('listening') },
-    { state: 'typing', label: '输入', run: () => setPill('typing') },
     {
-      state: 'working',
-      label: '执行 · 协作',
-      run: () => startJob('整理智能耳机用户访谈要点', 'report', { ask: false }),
-    },
-    {
-      state: 'confirm',
-      label: '确认通知',
-      run: () => startJob(recommendedTasks[0].title, 'report', { taskId: recommendedTasks[0].id, progress: CONFIRM_AT - 2 }),
-    },
-    {
-      state: 'camera',
-      label: '取景框',
+      state: 'listening',
+      label: 'Listening',
       run: () => {
-        setCameraQuestion('这副耳机是什么型号？')
-        setPill('camera')
+        setMode('auto')
+        setFlash(null)
+        setDeferred(true)
       },
     },
+    { state: 'typing', label: 'Keyboard', run: () => setMode('typing') },
+    { state: 'camera', label: 'Camera', run: () => setMode('camera') },
     {
-      state: 'done',
-      label: '结果反馈',
-      run: () => startJob('耳机节日海报 · 第二版', 'poster', { ask: false, progress: 98 }),
+      state: 'confirm',
+      label: 'Collaboration',
+      run: () =>
+        startJob(recommendedTasks[0].title, 'report', { taskId: recommendedTasks[0].id, progress: CONFIRM_AT - 2 }),
+    },
+    {
+      state: 'caption',
+      label: 'Caption',
+      run: () => {
+        setMode('auto')
+        setMuted(true)
+        setFlash({ text: "Your speaker is off, so I'll show my replies here." })
+      },
     },
   ]
 
@@ -209,76 +289,88 @@ export default function App() {
     <div className="app">
       <Background />
 
-      <nav className="topbar glass-pill" aria-label="系统">
-        <button title="仪表盘">
+      <nav className="topbar glass-pill" aria-label="System">
+        <button
+          title={muted ? 'Speaker off — replies show as captions' : 'Speaker on'}
+          className={muted ? 'is-off' : ''}
+          onClick={() => setMuted(!muted)}
+        >
+          {muted ? <IconVolumeOff size={15} /> : <IconVolume size={15} />}
+        </button>
+        <button title="Dashboard">
           <IconGauge size={15} />
         </button>
-        <button title="账户">
+        <button title="Account">
           <IconUser size={15} />
         </button>
-        <button title="归档">
+        <button title="Archive">
           <IconArchive size={15} />
         </button>
       </nav>
 
       <main className={`stage ${pill === 'confirm' || pill === 'camera' ? 'is-dimmed' : ''}`}>
-        <PinnedArea widgets={widgets} outputs={outputs} onChange={setWidgets} />
-        <FeedArea
-          outputs={outputs}
-          pinnedOutputIds={pinnedOutputIds}
-          conversation={conversation}
-          tasks={recommendedTasks}
-          runningTaskId={job?.taskId ?? null}
-          onOpenOutput={openOutput}
-          onPinOutput={togglePin}
-          onRunTask={runTask}
-          onFollowUp={(q) => startJob(q, 'report', { ask: false })}
-        />
+        <div
+          ref={groupRef}
+          className={`group ${moving ? 'is-moving' : ''}`}
+          style={{ left: pos?.x ?? 0, top: pos?.y ?? 0, gap: GROUP_GAP, visibility: pos ? 'visible' : 'hidden' }}
+        >
+          <PinnedArea widgets={widgets} outputs={outputs} onChange={setWidgets} onGrab={grab} dragging={moving} />
+          <FeedArea
+            outputs={outputs}
+            pinnedOutputIds={pinnedOutputIds}
+            conversation={conversation}
+            tasks={recommendedTasks}
+            runningTaskId={job?.taskId ?? null}
+            onOpenOutput={openOutput}
+            onPinOutput={togglePin}
+            onRunTask={runTask}
+            onFollowUp={(q) => startJob(q, 'report', { ask: false })}
+          />
+        </div>
       </main>
+
+      {pill === 'camera' && <div className="dismiss-layer" onClick={() => setMode('auto')} aria-hidden />}
 
       <AgentPill
         state={pill}
+        busy={!!job && !awaitingConfirm}
+        micOn={micOn}
         input={input}
         onInput={setInput}
         onSubmit={() => input.trim() && startJob(input.trim(), guessKind(input))}
         onCancel={() => {
           setInput('')
-          setPill(restState())
+          setMode('auto')
         }}
-        onActivate={() => {
-          if (pill === 'listening') return setPill(restState())
-          if (awaitingConfirm) return setPill('confirm')
-          setPill('listening')
+        onTapBall={() => {
+          if (awaitingConfirm) return setDeferred(false)
+          setMode('typing')
         }}
         onOpenCamera={() => {
-          setCameraQuestion(input.trim())
           setInput('')
-          setPill('camera')
+          setMode('camera')
         }}
-        onStartListening={() => setPill('listening')}
-        onTranscriptDone={handleTranscriptDone}
-        job={jobView}
+        onUseMic={() => {
+          setMicOn(true)
+          setMode('auto')
+        }}
         awaitingConfirm={awaitingConfirm}
         confirm={job?.confirm ?? null}
         onConfirm={() => {
           setJob((j) => (j ? { ...j, confirmed: true } : j))
-          setPill('working')
+          announce('Got it, continuing.')
         }}
-        onDefer={() => setPill('idle')}
-        doneText={doneOutput ? `「${doneOutput.title}」已生成` : '任务已完成'}
-        onOpenDone={() => {
-          if (doneOutput) openOutput(doneOutput)
-          setPill('idle')
-        }}
-        cameraQuestion={cameraQuestion}
-        onCameraAction={(a) => {
-          if (a === 'add') startJob('将 Sony WH-1000XM5 加入竞品分析', 'report', { ask: false })
-          else setPill(restState())
+        onDefer={() => setDeferred(true)}
+        caption={caption}
+        onCaptionClick={() => {
+          const o = outputs.find((x) => x.id === flash?.outputId)
+          if (o) openOutput(o)
+          setFlash(null)
         }}
       />
 
-      <aside className="demo-panel glass-pill" aria-label="原型状态演示">
-        <span>药丸状态</span>
+      <aside className="demo-panel glass-pill" aria-label="Agent states demo">
+        <span>Agent states</span>
         {demo.map((d) => (
           <button key={d.state} className={pill === d.state ? 'is-on' : ''} onClick={d.run}>
             {d.label}
@@ -293,20 +385,22 @@ export default function App() {
               <OutputThumb kind={preview.kind} />
             </div>
             <div className="preview-body">
-              <span className="card-tag">{preview.createdAt}生成 · {preview.subtitle}</span>
+              <span className="card-tag">
+                {preview.createdAt} · {preview.subtitle}
+              </span>
               <h2>{preview.title}</h2>
-              <p>由 Agent 根据你的项目上下文生成。可以固定到左侧，方便随时查看。</p>
+              <p>Generated by the agent from your project context. Pin it to keep it at hand.</p>
               <div className="preview-actions">
                 <button className="btn-primary" onClick={() => togglePin(preview)}>
                   <IconPin size={14} />
-                  {pinnedOutputIds.has(preview.id) ? '取消固定' : '固定到左侧'}
+                  {pinnedOutputIds.has(preview.id) ? 'Unpin' : 'Pin'}
                 </button>
                 <button className="btn-ghost" onClick={() => setPreview(null)}>
-                  关闭
+                  Close
                 </button>
               </div>
             </div>
-            <button className="preview-close" onClick={() => setPreview(null)} aria-label="关闭">
+            <button className="preview-close" onClick={() => setPreview(null)} aria-label="Close">
               <IconClose size={16} />
             </button>
           </div>

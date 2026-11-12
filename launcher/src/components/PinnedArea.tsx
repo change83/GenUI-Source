@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type PointerEvent } from 'react'
 import { widgetLibrary, type Output, type Widget } from '../data'
 import { IconCheck, IconClose, IconEdit, IconPlus } from './Icons'
 import { WidgetBody } from './Widgets'
@@ -7,9 +7,11 @@ interface Props {
   widgets: Widget[]
   outputs: Output[]
   onChange: (next: Widget[]) => void
+  onGrab: (e: PointerEvent<HTMLElement>) => void
+  dragging: boolean
 }
 
-export function PinnedArea({ widgets, outputs, onChange }: Props) {
+export function PinnedArea({ widgets, outputs, onChange, onGrab, dragging }: Props) {
   const [editing, setEditing] = useState(false)
   const [libraryOpen, setLibraryOpen] = useState(false)
   const [dragId, setDragId] = useState<string | null>(null)
@@ -30,20 +32,25 @@ export function PinnedArea({ widgets, outputs, onChange }: Props) {
   }
 
   return (
-    <section className={`pinned glass-panel ${editing ? 'is-editing' : ''}`} aria-label="我的固定区">
-      <div className="pinned-toolbar">
-        <span className="pinned-label">我的固定区</span>
-        <button
-          className="pinned-edit"
-          onClick={() => {
-            setEditing(!editing)
-            setLibraryOpen(false)
-          }}
-        >
-          {editing ? <IconCheck size={13} /> : <IconEdit size={13} />}
-          {editing ? '完成' : '编辑'}
-        </button>
-      </div>
+    <section
+      className={`pinned glass-panel ${editing ? 'is-editing' : ''} ${dragging ? 'is-moving' : ''}`}
+      aria-label="Pinned"
+      onPointerDown={(e) => {
+        if (editing) return
+        if ((e.target as HTMLElement).closest('button, input, a, .widget-library')) return
+        onGrab(e)
+      }}
+    >
+      <button
+        className="pinned-edit"
+        onClick={() => {
+          setEditing(!editing)
+          setLibraryOpen(false)
+        }}
+      >
+        {editing ? <IconCheck size={13} /> : <IconEdit size={13} />}
+        {editing ? 'Done' : 'Edit'}
+      </button>
 
       <div className="pinned-grid">
         {widgets.map((w) => (
@@ -62,7 +69,7 @@ export function PinnedArea({ widgets, outputs, onChange }: Props) {
             {editing && (
               <button
                 className="widget-remove"
-                aria-label="取消固定"
+                aria-label="Unpin"
                 onClick={() => onChange(widgets.filter((x) => x.id !== w.id))}
               >
                 <IconClose size={11} />
@@ -73,15 +80,15 @@ export function PinnedArea({ widgets, outputs, onChange }: Props) {
         {(editing || widgets.length === 0) && (
           <button className="widget size-small widget-add" onClick={() => setLibraryOpen(!libraryOpen)}>
             <IconPlus size={22} />
-            <span>添加组件</span>
-            <small>或把 Agent 产出物固定到这里</small>
+            <span>Add widget</span>
+            <small>or pin an agent output here</small>
           </button>
         )}
       </div>
 
       {libraryOpen && (
         <div className="widget-library">
-          <div className="widget-library-title">组件库</div>
+          <div className="widget-library-title">Widgets</div>
           {widgetLibrary.map((item) => (
             <button key={item.kind} onClick={() => add(item.kind, item.size)}>
               <strong>{item.name}</strong>

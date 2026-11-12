@@ -30,7 +30,7 @@ export function FeedArea({
   const pinned = featured ? pinnedOutputIds.has(featured.id) : false
 
   return (
-    <section className="feed" aria-label="Agent 动态">
+    <section className="feed" aria-label="Agent feed">
       <div className="feed-row">
         {featured && (
           <article
@@ -41,15 +41,15 @@ export function FeedArea({
             <div className="output-art">
               <OutputThumb kind={featured.kind} />
             </div>
-            <div className="output-title">{featured.title}</div>
+            {featured.kind !== 'poster' && <div className="output-title">{featured.title}</div>}
             <div className="output-foot">
               <span className="card-tag">
                 {featured.unread && <i className="dot" />}
-                {featured.unread ? (unread.length > 1 ? `${unread.length} 个新产出` : '新产出') : '最近产出'}
+                {featured.unread ? (unread.length > 1 ? `${unread.length} new` : 'New') : 'Recent'}
               </span>
               <button
                 className={`icon-btn ${pinned ? 'is-on' : ''}`}
-                title={pinned ? '已固定到左侧' : '固定到左侧'}
+                title={pinned ? 'Pinned' : 'Pin to the left'}
                 onClick={(e) => {
                   e.stopPropagation()
                   onPinOutput(featured)
@@ -77,7 +77,7 @@ export function FeedArea({
           </div>
           <span className="card-tag is-floating">
             <i className="dot is-live" />
-            对话进行中
+            In conversation
           </span>
         </article>
       </div>
@@ -95,8 +95,8 @@ export function FeedArea({
               <p>{t.title}</p>
               <span>{t.deliverable}</span>
             </div>
-            <span className="task-cta">{running ? '执行中…' : '让 Agent 执行'}</span>
-            <span className="card-tag is-floating">推荐任务</span>
+            <span className="task-cta">{running ? 'Running…' : 'Run with agent'}</span>
+            <span className="card-tag is-floating">Suggested</span>
           </article>
         )
       })}

@@ -40,41 +40,45 @@ export const initialWidgets: Widget[] = [
 ]
 
 export const widgetLibrary: { kind: WidgetKind; size: WidgetSize; name: string; desc: string }[] = [
-  { kind: 'calendar', size: 'tall', name: '日程', desc: '今日安排与会议' },
-  { kind: 'stock', size: 'small', name: '资产走势', desc: '关注的行情 K 线' },
-  { kind: 'running', size: 'small', name: '跑步记录', desc: '本月运动打卡' },
-  { kind: 'weather', size: 'small', name: '天气', desc: '所在城市实时天气' },
-  { kind: 'project', size: 'small', name: '项目追踪', desc: '智能耳机 PRD 进度' },
-  { kind: 'news', size: 'wide', name: '关注资讯', desc: 'Agent 为你筛选的行业动态' },
+  { kind: 'calendar', size: 'tall', name: 'Calendar', desc: "Today's schedule and meetings" },
+  { kind: 'stock', size: 'small', name: 'Portfolio', desc: 'Candlestick chart you follow' },
+  { kind: 'running', size: 'small', name: 'Running', desc: 'Monthly activity streak' },
+  { kind: 'weather', size: 'small', name: 'Weather', desc: 'Live weather where you are' },
+  { kind: 'project', size: 'small', name: 'Project', desc: 'Smart headphones PRD progress' },
+  { kind: 'news', size: 'wide', name: 'Following', desc: 'Industry news picked by the agent' },
 ]
 
 export const initialOutputs: Output[] = [
   {
     id: 'o-poster',
     kind: 'poster',
-    title: '耳机节日海报设计',
-    subtitle: '3 张海报 · PNG',
-    createdAt: '10 分钟前',
+    title: 'Headphones Festival Poster Design',
+    subtitle: '3 posters · PNG',
+    createdAt: '10 min ago',
     unread: true,
   },
 ]
 
 export const conversation: Conversation = {
   id: 'c-wearable',
-  title: '可穿戴产品竞品分析',
-  followUps: ['海外市场 Top 3 竞品销量分析', '产品功能维度对比矩阵', '竞品用户群体深度画像'],
+  title: 'Competitor Analysis for Wearable Products',
+  followUps: [
+    'Analysis of the top 3 competitors in overseas sales',
+    'Comparison of product function dimension matrix',
+    'In-depth analysis of competitor consumer groups',
+  ],
 }
 
 export const recommendedTasks: RecommendedTask[] = [
   {
     id: 't-report',
-    title: '生成一份竞品分析报告，用于项目讨论',
-    deliverable: 'PDF 文件',
+    title: 'Generate a Competitor Analysis Report for Project Discussions.',
+    deliverable: 'PDF File',
     outputKind: 'report',
   },
   {
     id: 't-web',
-    title: '基于智能耳机 PRD，生成一个产品介绍网页',
+    title: 'Generate a product introduction web based on the PRD of smart headphones.',
     deliverable: 'Web Demo',
     outputKind: 'web',
   },

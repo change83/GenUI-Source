@@ -17,14 +17,14 @@ const hours = ['08:30', '09:00', '10:00', '11:00', '11:30', '12:30', '13:00', '1
 
 const events: Record<number, { title: string; time: string; place: string; start: number; span: number; tone: 'rose' | 'violet' }[]> = {
   10: [
-    { title: '早餐', time: '8:30-9:30', place: '家', start: 0, span: 1.6, tone: 'rose' },
-    { title: '和 Emilia 午餐', time: '11:30-12:30', place: 'Taste Korea', start: 4, span: 1.6, tone: 'violet' },
+    { title: 'Breakfast', time: '8:30-9:30', place: 'home', start: 0, span: 1.6, tone: 'rose' },
+    { title: 'Lunch with Emilia', time: '11:30-12:30', place: 'Taste Korea', start: 4, span: 1.6, tone: 'violet' },
     { title: 'Daily UI', time: '12:30-15:00', place: 'Taste Korea', start: 5.7, span: 2.6, tone: 'rose' },
-    { title: '瑜伽课', time: '19:00-20:30', place: '家', start: 12, span: 1.7, tone: 'rose' },
+    { title: 'Yoga course', time: '19:00-20:30', place: 'home', start: 12, span: 1.7, tone: 'rose' },
   ],
   11: [
-    { title: 'PRD 评审', time: '10:00-11:30', place: '会议室 3F', start: 2, span: 2, tone: 'violet' },
-    { title: '竞品分析同步', time: '14:00-15:00', place: '线上', start: 7, span: 1.6, tone: 'rose' },
+    { title: 'PRD review', time: '10:00-11:30', place: 'Room 3F', start: 2, span: 2, tone: 'violet' },
+    { title: 'Competitor sync', time: '14:00-15:00', place: 'Online', start: 7, span: 1.6, tone: 'rose' },
   ],
 }
 
@@ -35,8 +35,8 @@ function CalendarWidget() {
   return (
     <div className="w-calendar">
       <div className="w-cal-head">
-        <span className="w-title">6 月</span>
-        <button className="link-btn">添加</button>
+        <span className="w-title">June</span>
+        <button className="link-btn">Add</button>
       </div>
       <div className="w-cal-days">
         {days.map((d) => (
@@ -54,7 +54,7 @@ function CalendarWidget() {
           ))}
         </div>
         <div className="w-cal-events" style={{ height: hours.length * rowH }}>
-          {list.length === 0 && <div className="w-cal-empty">今天没有安排</div>}
+          {list.length === 0 && <div className="w-cal-empty">Nothing scheduled</div>}
           {list.map((e) => (
             <div
               key={e.title}
@@ -88,7 +88,7 @@ const candles = [
 ]
 
 function StockWidget() {
-  const [range, setRange] = useState<'月' | '周'>('月')
+  const [range, setRange] = useState<'Month' | 'Week'>('Month')
   const w = 128
   const h = 92
   const min = 6.8
@@ -98,9 +98,9 @@ function StockWidget() {
     <div className="w-stock">
       <div className="w-stock-head">
         <span className="w-stock-value">
-          ¥112,340<small>.00</small>
+          $112,340<small>.00</small>
         </span>
-        <button className="chip-btn" onClick={() => setRange(range === '月' ? '周' : '月')}>
+        <button className="chip-btn" onClick={() => setRange(range === 'Month' ? 'Week' : 'Month')}>
           {range}
           <IconChevronDown size={10} />
         </button>
@@ -130,17 +130,17 @@ function StockWidget() {
           })}
         </svg>
         <div className="w-stock-axis">
-          <span>10k</span>
-          <span className="is-tag">9,000</span>
-          <span>8k</span>
-          <span>7k</span>
+          <span>$10k</span>
+          <span className="is-tag">$9,000</span>
+          <span>$8k</span>
+          <span>$7k</span>
         </div>
       </div>
       <div className="w-stock-x">
-        <span>12/22</span>
-        <span>12/23</span>
-        <span>12/24</span>
-        <span>12/25</span>
+        <span>Dec 22</span>
+        <span>Dec 23</span>
+        <span>Dec 24</span>
+        <span>Dec 25</span>
       </div>
     </div>
   )
@@ -155,13 +155,13 @@ function RunningWidget() {
           <IconRun size={16} />
         </span>
         <div>
-          <div className="w-title-s">跑步记录</div>
-          <div className="w-meta">2 月 1 - 28 日</div>
+          <div className="w-title-s">Running Activity</div>
+          <div className="w-meta">1-28, February 2026</div>
         </div>
         <IconMore size={14} className="w-more" />
       </div>
       <div className="w-run-total">
-        182.75 <small>km</small>
+        182,75 <small>km</small>
       </div>
       <div className="w-run-dots">
         {Array.from({ length: 30 }, (_, i) => (
@@ -177,19 +177,19 @@ function RunningWidget() {
 function WeatherWidget() {
   return (
     <div className="w-weather">
-      <div className="w-meta">上海 · 徐汇</div>
+      <div className="w-meta">San Francisco</div>
       <IconSun size={34} className="w-weather-icon" />
-      <div className="w-weather-temp">23°</div>
-      <div className="w-meta">晴转多云 · 18° / 26°</div>
+      <div className="w-weather-temp">72°</div>
+      <div className="w-meta">Partly cloudy · 64° / 79°</div>
     </div>
   )
 }
 
 function ProjectWidget() {
   const steps = [
-    { name: '需求调研', v: 100 },
-    { name: 'PRD 撰写', v: 72 },
-    { name: '竞品分析', v: 40 },
+    { name: 'Research', v: 100 },
+    { name: 'PRD writing', v: 72 },
+    { name: 'Competitor analysis', v: 40 },
   ]
   return (
     <div className="w-project">
@@ -198,8 +198,8 @@ function ProjectWidget() {
           <IconFolder size={15} />
         </span>
         <div>
-          <div className="w-title-s">智能耳机项目</div>
-          <div className="w-meta">截止 6 月 30 日</div>
+          <div className="w-title-s">Smart Headphones</div>
+          <div className="w-meta">Due June 30</div>
         </div>
       </div>
       {steps.map((s) => (
@@ -219,9 +219,9 @@ function ProjectWidget() {
 
 function NewsWidget() {
   const items = [
-    { tag: '市场', text: '2026 Q2 全球 TWS 耳机出货量同比增长 11%' },
-    { tag: '竞品', text: 'Sony 发布新一代降噪芯片，续航提升 30%' },
-    { tag: '技术', text: '骨传导 + 开放式设计成为运动耳机新趋势' },
+    { tag: 'Market', text: 'Global TWS shipments up 11% YoY in Q2 2026' },
+    { tag: 'Rival', text: 'Sony ships a new ANC chip with 30% longer battery' },
+    { tag: 'Tech', text: 'Open-ear designs are the new sports trend' },
   ]
   return (
     <div className="w-news">
@@ -229,7 +229,7 @@ function NewsWidget() {
         <span className="w-run-icon is-amber">
           <IconNews size={15} />
         </span>
-        <div className="w-title-s">关注资讯</div>
+        <div className="w-title-s">Following</div>
       </div>
       {items.map((n) => (
         <div key={n.text} className="w-news-item">

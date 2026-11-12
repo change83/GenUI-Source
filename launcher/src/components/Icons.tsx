@@ -142,6 +142,18 @@ export const IconNews = ({ size, ...p }: P) => (
     <path d="M7 8h10M7 12h10M7 16h6" />
   </svg>
 )
+export const IconVolume = ({ size, ...p }: P) => (
+  <svg {...base(size)} {...p}>
+    <path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" />
+    <path d="M15.5 9a4.5 4.5 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11" />
+  </svg>
+)
+export const IconVolumeOff = ({ size, ...p }: P) => (
+  <svg {...base(size)} {...p}>
+    <path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" />
+    <path d="M16 9.5l5 5M21 9.5l-5 5" />
+  </svg>
+)
 export const IconBolt = ({ size, ...p }: P) => (
   <svg {...base(size)} {...p}>
     <path d="M13 3L5 13h6l-1 8 8-10h-6l1-8z" />

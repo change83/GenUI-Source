@@ -1,25 +1,24 @@
-# Agent Launcher 原型
+# Agent Launcher prototype
 
 ```bash
 npm install
 npm run dev
 ```
 
-## 页面结构
+## Layout
 
-- 左侧「我的固定区」：用户固定的组件与 Agent 产出物。悬停后点「编辑」可拖拽排序、删除、从组件库添加。
-- 右侧 Agent 动态：未读产出物（可固定到左侧）、进行中的对话、Agent 推荐任务（点击即执行）。
-- 底部 Agent 状态药丸：同一个容器通过形变切换状态。
+- **Pinned area** (left): widgets and pinned agent outputs. Press and drag the frosted panel to move it anywhere; hover and click **Edit** to reorder, remove or add widgets.
+- **Dynamic area** (right): unread outputs, the ongoing conversation, and suggested tasks. It stays top-aligned with the pinned area, 80px to its right, and moves with it.
+- **Agent ball** (bottom): a WebGL liquid-glass pane (reused from `liquid-glass.html`) that morphs between states with spring physics. Page background and glass refraction share `public/bg.jpg`.
 
-## 药丸状态
+## Agent states
 
-| 状态 | 触发方式 |
+| State | How it appears |
 | --- | --- |
-| 聆听（流转光晕） | 点击药丸 |
-| 输入框 | 页面任意处直接敲键盘 |
-| 执行 · 协作同步 | 回车提交，或点击推荐任务 |
-| 确认通知卡片 | 任务执行中需要用户决策时自动弹出 |
-| 取景框 | 语音询问实物，或在输入框点相机 |
-| 结果反馈 | 任务完成后出现，点「查看」打开产出物 |
+| Listening | Default animated ball; with the mic on, its motion follows your voice |
+| Keyboard | Start typing anywhere, or tap the ball; expands into a text field |
+| Camera | Camera button in the text field; a live preview with a single recognition tag. Click outside or press Esc to close |
+| Collaboration | A confirmation card when a running task needs your decision |
+| Caption | With the speaker off (top-right), agent replies appear as a one-line caption |
 
-左下角「药丸状态」面板可以直接跳到任一状态用于演示。
+The **Agent states** panel (bottom left) jumps to any state for demos.
