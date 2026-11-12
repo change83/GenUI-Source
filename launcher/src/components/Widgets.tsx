@@ -137,10 +137,10 @@ function StockWidget() {
         </div>
       </div>
       <div className="w-stock-x">
-        <span>Dec 22</span>
-        <span>Dec 23</span>
-        <span>Dec 24</span>
-        <span>Dec 25</span>
+        <span>22</span>
+        <span>23</span>
+        <span>24</span>
+        <span>25 Dec</span>
       </div>
     </div>
   )
@@ -156,7 +156,7 @@ function RunningWidget() {
         </span>
         <div>
           <div className="w-title-s">Running Activity</div>
-          <div className="w-meta">1-28, February 2026</div>
+          <div className="w-meta">Feb 1–28</div>
         </div>
         <IconMore size={14} className="w-more" />
       </div>

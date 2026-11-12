@@ -25,42 +25,40 @@ export function FeedArea({
   onRunTask,
   onFollowUp,
 }: Props) {
-  const unread = outputs.filter((o) => o.unread)
-  const featured = unread[0] ?? outputs[0]
-  const pinned = featured ? pinnedOutputIds.has(featured.id) : false
-
   return (
     <section className="feed" aria-label="Agent feed">
       <div className="feed-row">
-        {featured && (
-          <article
-            key={featured.id}
-            className={`card output-card kind-${featured.kind} ${featured.unread ? 'is-unread' : ''}`}
-            onClick={() => onOpenOutput(featured)}
-          >
-            <div className="output-art">
-              <OutputThumb kind={featured.kind} />
-            </div>
-            {featured.kind !== 'poster' && <div className="output-title">{featured.title}</div>}
-            <div className="output-foot">
-              <span className="card-tag">
-                {featured.unread && <i className="dot" />}
-                {featured.unread ? (unread.length > 1 ? `${unread.length} new` : 'New') : 'Recent'}
-              </span>
-              <button
-                className={`icon-btn ${pinned ? 'is-on' : ''}`}
-                title={pinned ? 'Pinned' : 'Pin to the left'}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onPinOutput(featured)
-                }}
-              >
-                {pinned ? <IconCheck size={12} /> : <IconPin size={12} />}
-              </button>
-            </div>
-            {unread.length > 1 && <div className="output-stack" aria-hidden />}
-          </article>
-        )}
+        {outputs.map((o) => {
+          const pinned = pinnedOutputIds.has(o.id)
+          return (
+            <article
+              key={o.id}
+              className={`card output-card kind-${o.kind} ${o.fresh ? 'is-fresh' : ''}`}
+              onClick={() => onOpenOutput(o)}
+            >
+              <div className="output-art">
+                <OutputThumb kind={o.kind} />
+              </div>
+              {o.kind !== 'poster' && <div className="output-title">{o.title}</div>}
+              <div className="output-foot">
+                <span className="card-tag">
+                  {o.unread && <i className="dot" />}
+                  {o.unread ? 'New' : 'Recent'}
+                </span>
+                <button
+                  className={`icon-btn ${pinned ? 'is-on' : ''}`}
+                  title={pinned ? 'Pinned' : 'Pin to the left'}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onPinOutput(o)
+                  }}
+                >
+                  {pinned ? <IconCheck size={12} /> : <IconPin size={12} />}
+                </button>
+              </div>
+            </article>
+          )
+        })}
 
         <article className="card convo-card">
           <header>

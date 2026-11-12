@@ -18,6 +18,7 @@ export interface Output {
   subtitle: string
   createdAt: string
   unread: boolean
+  fresh?: boolean
 }
 
 export interface RecommendedTask {

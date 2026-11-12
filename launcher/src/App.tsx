@@ -163,6 +163,7 @@ export default function App() {
         subtitle: job.kind === 'web' ? 'Web Demo' : job.kind === 'poster' ? 'PNG' : 'PDF File · 12 pages',
         createdAt: 'Just now',
         unread: true,
+        fresh: true,
       }
       setOutputs((o) => [output, ...o])
       setJob(null)
@@ -309,7 +310,7 @@ export default function App() {
         </button>
       </nav>
 
-      <main className={`stage ${pill === 'confirm' || pill === 'camera' ? 'is-dimmed' : ''}`}>
+      <main className={`stage ${pill === 'camera' ? 'is-dimmed' : ''}`}>
         <div
           ref={groupRef}
           className={`group ${moving ? 'is-moving' : ''}`}
