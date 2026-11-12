@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { BALL, GlassPill, type GlassTarget } from '../glass/GlassPill'
+import { AudioMotionBridge, AudioReactive } from '../glass/liquidGlass.js'
 import {
   IconCamera,
   IconCheck,
@@ -214,10 +216,104 @@ function Confirm({
   )
 }
 
+const BOTTOM = 40
+const BACKDROP = '/bg.jpg'
+
+interface Form {
+  glass: GlassTarget & { width: number; height: number }
+  inset: number
+}
+
+function formFor(state: PillState, vw: number, hover: boolean): Form {
+  const fit = (w: number) => Math.min(w, vw - 48)
+  switch (state) {
+    case 'idle': {
+      const s = hover ? 68 : 60
+      return { glass: { ...BALL, width: s, height: s, radius: 30 }, inset: 0 }
+    }
+    case 'listening':
+      return { glass: { ...BALL, width: 112, height: 60, radius: 30, liquid: 30, glow: 92, glowMix: 100 }, inset: 0 }
+    case 'typing':
+      return { glass: { ...BALL, width: fit(680), height: 60, radius: 30, glow: 0, liquid: 0 }, inset: 0 }
+    case 'working':
+      return { glass: { ...BALL, width: fit(400), height: 60, radius: 30, glow: 70, liquid: 0 }, inset: 0 }
+    case 'done':
+      return {
+        glass: { ...BALL, width: fit(352), height: 60, radius: 30, glow: 60, liquid: 0, hue1: 140, hue2: 168, hue3: 100 },
+        inset: 0,
+      }
+    case 'confirm':
+      return { glass: { ...BALL, width: fit(432), height: 256, radius: 36, liquid: 0, edge: 1 }, inset: 6 }
+    case 'camera':
+      return { glass: { ...BALL, width: fit(392), height: 352, radius: 32, liquid: 0, edge: 1 }, inset: 6 }
+  }
+}
+
 export function AgentPill(props: Props) {
   const { state, job } = props
   const vw = useViewport()
+  const [hover, setHover] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const shellRef = useRef<HTMLDivElement>(null)
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const glassRef = useRef<GlassPill | null>(null)
+
+  useEffect(() => {
+    const glass = new GlassPill({
+      canvas: canvasRef.current!,
+      shell: shellRef.current!,
+      wrap: wrapRef.current!,
+      bottom: BOTTOM,
+      backdrop: BACKDROP,
+    })
+    glassRef.current = glass
+    return () => {
+      glass.dispose()
+      glassRef.current = null
+    }
+  }, [])
+
+  const form = formFor(state, vw, hover && state === 'idle')
+  const cw = form.glass.width - form.inset * 2
+  const ch = form.glass.height - form.inset * 2
+
+  useLayoutEffect(() => {
+    glassRef.current?.hideContent()
+  }, [state])
+
+  useEffect(() => {
+    glassRef.current?.setTarget(form.glass)
+  })
+
+  // Listening: the live microphone level drives the glass motion, like the
+  // original agent ball. Without mic permission a soft synthetic voice stands in.
+  useEffect(() => {
+    if (state !== 'listening') return
+    const bridge = new AudioMotionBridge(glassRef.current?.renderer ?? null)
+    bridge.setStrength(100)
+    let sim: ReturnType<typeof setInterval> | undefined
+    const simulate = () => {
+      if (sim) return
+      let t = 0
+      sim = setInterval(() => {
+        t += 0.05
+        const syllable = Math.max(0, Math.sin(t * 7)) * (0.6 + 0.4 * Math.sin(t * 1.3))
+        bridge.setInput({ level: 0.15 + 0.45 * syllable }, true)
+      }, 50)
+    }
+    const audio = new AudioReactive(
+      (l) => bridge.setInput(l, true),
+      (s) => s.type === 'error' && simulate(),
+    )
+    audio.setSensitivity(153)
+    audio.startMicrophone()
+    return () => {
+      if (sim) clearInterval(sim)
+      audio.dispose()
+      bridge.dispose()
+    }
+  }, [state])
 
   useEffect(() => {
     if (state === 'typing') {
@@ -230,126 +326,110 @@ export function AgentPill(props: Props) {
     }
   }, [state])
 
-  const dims: Record<PillState, [number, number, number]> = {
-    idle: [56, 34, 17],
-    listening: [132, 44, 22],
-    typing: [Math.min(680, vw - 48), 58, 29],
-    working: [Math.min(380, vw - 48), 54, 27],
-    confirm: [Math.min(420, vw - 48), 244, 26],
-    camera: [Math.min(380, vw - 48), 340, 30],
-    done: [Math.min(340, vw - 48), 54, 27],
-  }
-  const [w, h, r] = dims[state]
-  const vivid = state === 'idle' || state === 'listening'
+  const box = { width: cw, height: ch }
 
   return (
-    <div className={`pill-wrap state-${state}`}>
-      {state === 'listening' && <Listening onDone={props.onTranscriptDone} />}
-      {state === 'idle' && <div className="pill-hint">点击药丸说话 · 直接敲键盘输入</div>}
+    <>
+      <canvas ref={canvasRef} className="glass-canvas" aria-hidden />
+      <div ref={wrapRef} className={`pill-wrap state-${state}`}>
+        {state === 'listening' && <Listening onDone={props.onTranscriptDone} />}
+        {state === 'idle' && <div className="pill-hint">点击说话 · 直接敲键盘输入</div>}
 
-      <div className="pill-halo" style={{ width: w, height: h, borderRadius: r }} aria-hidden />
-      <div
-        className={`pill-shell ${vivid ? 'is-vivid' : ''}`}
-        style={{ width: w, height: h, borderRadius: r }}
-        role="region"
-        aria-label="Agent 状态"
-        onClick={state === 'idle' || state === 'listening' ? props.onActivate : undefined}
-      >
-        <div className="pill-fluid" aria-hidden />
+        <div
+          ref={shellRef}
+          className={`pill-shell ${state === 'idle' || state === 'listening' ? 'is-tappable' : ''}`}
+          role="region"
+          aria-label="Agent 状态"
+          onClick={state === 'idle' || state === 'listening' ? props.onActivate : undefined}
+          onMouseEnter={() => setHover(true)}
+          onMouseLeave={() => setHover(false)}
+        >
+          {state === 'idle' && props.awaitingConfirm && <span className="pill-badge" />}
 
-        {state === 'idle' && props.awaitingConfirm && <span className="pill-badge" />}
+          {state === 'typing' && (
+            <form
+              className="pill-content pill-input"
+              style={box}
+              onSubmit={(e) => {
+                e.preventDefault()
+                props.onSubmit()
+              }}
+            >
+              <input
+                ref={inputRef}
+                value={props.input}
+                onChange={(e) => props.onInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Escape' && props.onCancel()}
+                placeholder="问点什么，或让 Agent 帮你完成一件事…"
+                aria-label="输入指令"
+              />
+              <button type="button" className="pill-icon" onClick={props.onStartListening} title="语音输入">
+                <IconMic size={17} />
+              </button>
+              <button type="button" className="pill-icon" onClick={props.onOpenCamera} title="拍照提问">
+                <IconCamera size={17} />
+              </button>
+              <button type="submit" className="pill-send" disabled={!props.input.trim()} title="发送">
+                <IconSend size={16} />
+              </button>
+            </form>
+          )}
 
-        {state === 'listening' && (
-          <div className="pill-content pill-wave" key="listening">
-            {Array.from({ length: 5 }, (_, i) => (
-              <i key={i} style={{ animationDelay: `${i * 0.12}s` }} />
-            ))}
-          </div>
-        )}
+          {state === 'working' && job && (
+            <div className="pill-content pill-working" style={box}>
+              <div className="working-text">
+                <strong>{job.title}</strong>
+                <span>{job.stepLabel}</span>
+              </div>
+              <div className="working-agents">
+                {job.agents.map((a) => (
+                  <span
+                    key={a.name}
+                    className={`${a.active ? 'is-active' : ''} ${a.done ? 'is-done' : ''}`}
+                    title={a.name}
+                  >
+                    {a.name.slice(0, 1)}
+                  </span>
+                ))}
+              </div>
+              <i className="working-track">
+                <b style={{ width: `${job.progress}%` }} />
+              </i>
+            </div>
+          )}
+
+          {state === 'confirm' && props.confirm && (
+            <div className="pill-content pill-card" style={box}>
+              <Confirm view={props.confirm} onConfirm={props.onConfirm} onDefer={props.onDefer} />
+            </div>
+          )}
+
+          {state === 'camera' && (
+            <div className="pill-content pill-card is-camera" style={box}>
+              <Camera question={props.cameraQuestion} onAction={props.onCameraAction} />
+            </div>
+          )}
+
+          {state === 'done' && (
+            <div className="pill-content pill-done" style={box}>
+              <span className="done-check">
+                <IconCheck size={15} />
+              </span>
+              <strong>{props.doneText}</strong>
+              <button onClick={props.onOpenDone}>查看</button>
+            </div>
+          )}
+        </div>
 
         {state === 'typing' && (
-          <form
-            className="pill-content pill-input"
-            key="typing"
-            onSubmit={(e) => {
-              e.preventDefault()
-              props.onSubmit()
-            }}
-          >
-            <Orb size={24} />
-            <input
-              ref={inputRef}
-              value={props.input}
-              onChange={(e) => props.onInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Escape' && props.onCancel()}
-              placeholder="问点什么，或让 Agent 帮你完成一件事…"
-              aria-label="输入指令"
-            />
-            <button type="button" className="pill-icon" onClick={props.onStartListening} title="语音输入">
-              <IconMic size={17} />
-            </button>
-            <button type="button" className="pill-icon" onClick={props.onOpenCamera} title="拍照提问">
-              <IconCamera size={17} />
-            </button>
-            <button type="submit" className="pill-send" disabled={!props.input.trim()} title="发送">
-              <IconSend size={16} />
-            </button>
-          </form>
-        )}
-
-        {state === 'working' && job && (
-          <div className="pill-content pill-working" key="working">
-            <Orb size={26} spinning />
-            <div className="working-text">
-              <strong>{job.title}</strong>
-              <span>{job.stepLabel}</span>
-            </div>
-            <div className="working-agents">
-              {job.agents.map((a) => (
-                <span
-                  key={a.name}
-                  className={`${a.active ? 'is-active' : ''} ${a.done ? 'is-done' : ''}`}
-                  title={a.name}
-                >
-                  {a.name.slice(0, 1)}
-                </span>
-              ))}
-            </div>
-            <i className="working-bar" style={{ width: `${job.progress}%` }} />
-          </div>
-        )}
-
-        {state === 'confirm' && props.confirm && (
-          <div className="pill-content" key="confirm">
-            <Confirm view={props.confirm} onConfirm={props.onConfirm} onDefer={props.onDefer} />
-          </div>
-        )}
-
-        {state === 'camera' && (
-          <div className="pill-content" key="camera">
-            <Camera question={props.cameraQuestion} onAction={props.onCameraAction} />
-          </div>
-        )}
-
-        {state === 'done' && (
-          <div className="pill-content pill-done" key="done">
-            <span className="done-check">
-              <IconCheck size={15} />
+          <div className="pill-shortcuts">
+            <span>
+              <IconKeyboard size={12} /> Enter 发送
             </span>
-            <strong>{props.doneText}</strong>
-            <button onClick={props.onOpenDone}>查看</button>
+            <span>Esc 收起</span>
           </div>
         )}
       </div>
-
-      {state === 'typing' && (
-        <div className="pill-shortcuts">
-          <span>
-            <IconKeyboard size={12} /> Enter 发送
-          </span>
-          <span>Esc 收起</span>
-        </div>
-      )}
-    </div>
+    </>
   )
 }
