@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { BALL, GlassPill, type GlassTarget } from '../glass/GlassPill'
 import { AudioMotionBridge, AudioReactive } from '../glass/liquidGlass.js'
-import { IconCamera, IconCheck, IconKeyboard, IconMic, IconSend } from './Icons'
+import { IconCheck } from './Icons'
 
 export type PillState = 'listening' | 'typing' | 'camera' | 'confirm' | 'caption'
 
@@ -21,8 +21,6 @@ interface Props {
   onSubmit: () => void
   onCancel: () => void
   onTapBall: () => void
-  onOpenCamera: () => void
-  onUseMic: () => void
   awaitingConfirm: boolean
   confirm: ConfirmView | null
   onConfirm: (selected: string[]) => void
@@ -247,10 +245,6 @@ export function AgentPill(props: Props) {
     <>
       <canvas ref={canvasRef} className="glass-canvas" aria-hidden />
       <div ref={wrapRef} className={`pill-wrap state-${state}`}>
-        {state === 'listening' && (
-          <div className="pill-hint">{props.micOn ? 'Listening…' : 'Tap or start typing'}</div>
-        )}
-
         <div
           ref={shellRef}
           className={`pill-shell ${tappable ? 'is-tappable' : ''}`}
@@ -279,15 +273,6 @@ export function AgentPill(props: Props) {
                 placeholder="Ask anything, or tell the agent what to do…"
                 aria-label="Message"
               />
-              <button type="button" className="pill-icon" onClick={props.onUseMic} title="Voice">
-                <IconMic size={17} />
-              </button>
-              <button type="button" className="pill-icon" onClick={props.onOpenCamera} title="Camera">
-                <IconCamera size={17} />
-              </button>
-              <button type="submit" className="pill-send" disabled={!props.input.trim()} title="Send">
-                <IconSend size={16} />
-              </button>
             </form>
           )}
 
@@ -310,14 +295,6 @@ export function AgentPill(props: Props) {
           )}
         </div>
 
-        {state === 'typing' && (
-          <div className="pill-shortcuts">
-            <span>
-              <IconKeyboard size={12} /> Enter to send
-            </span>
-            <span>Esc to close</span>
-          </div>
-        )}
       </div>
     </>
   )

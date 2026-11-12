@@ -264,6 +264,7 @@ export default function App() {
         setMode('auto')
         setFlash(null)
         setDeferred(true)
+        setMicOn(true)
       },
     },
     { state: 'typing', label: 'Keyboard', run: () => setMode('typing') },
@@ -345,14 +346,6 @@ export default function App() {
         onTapBall={() => {
           if (awaitingConfirm) return setDeferred(false)
           setMode('typing')
-        }}
-        onOpenCamera={() => {
-          setInput('')
-          setMode('camera')
-        }}
-        onUseMic={() => {
-          setMicOn(true)
-          setMode('auto')
         }}
         awaitingConfirm={awaitingConfirm}
         confirm={job?.confirm ?? null}

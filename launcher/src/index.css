@@ -59,19 +59,53 @@ p {
 
 /* ---------- Glass primitives ---------- */
 
-.glass-panel {
-  background: rgba(255, 255, 255, 0.22);
-  backdrop-filter: blur(50px) saturate(1.3);
-  -webkit-backdrop-filter: blur(50px) saturate(1.3);
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), var(--elevation-4);
+/* Frosted glass shared by every glass surface: heavy blur, milky tint, and a rim
+   that is bright where light hits (top-left), dim on the shadow side, and picks up
+   a soft reflection on the opposite corner. */
+.glass-panel,
+.glass-pill,
+.card:not(.output-card) {
+  --frost-blur: 50px;
+  background:
+    linear-gradient(155deg, rgba(255, 255, 255, 0.46) 0%, rgba(255, 255, 255, 0.26) 45%, rgba(255, 255, 255, 0.32) 100%);
+  backdrop-filter: blur(var(--frost-blur)) blur(var(--frost-blur)) saturate(1.5) brightness(1.06);
+  -webkit-backdrop-filter: blur(var(--frost-blur)) blur(var(--frost-blur)) saturate(1.5) brightness(1.06);
+  border: 0;
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.65),
+    inset 0 -1px 1px rgba(120, 40, 50, 0.08),
+    inset 0 0 18px rgba(255, 255, 255, 0.18),
+    0 12px 32px rgba(90, 20, 30, 0.14);
+}
+
+.glass-panel::after,
+.glass-pill::after,
+.card:not(.output-card)::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.2px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0.45) 16%,
+    rgba(255, 255, 255, 0.08) 42%,
+    rgba(255, 255, 255, 0.03) 58%,
+    rgba(255, 255, 255, 0.35) 82%,
+    rgba(255, 255, 255, 0.75) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  pointer-events: none;
 }
 
 .glass-pill {
-  background: rgba(255, 255, 255, 0.24);
-  backdrop-filter: blur(var(--blur-surface));
-  -webkit-backdrop-filter: blur(var(--blur-surface));
-  border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: var(--radius-pill);
 }
 
@@ -143,8 +177,8 @@ p {
 
 .pinned {
   position: relative;
-  padding: 14px;
-  border-radius: 30px;
+  padding: 20px;
+  border-radius: 42px;
 }
 
 .pinned {
@@ -188,7 +222,7 @@ p {
   grid-template-columns: repeat(2, 196px);
   grid-auto-rows: 172px;
   grid-auto-flow: dense;
-  gap: 12px;
+  gap: 20px;
   max-height: calc(100vh - 260px);
   overflow-y: auto;
   scrollbar-width: none;
@@ -830,24 +864,19 @@ p {
   width: 476px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 20px;
 }
 
 .feed-row {
   display: grid;
   grid-template-columns: 184px 1fr;
-  gap: 12px;
+  gap: 20px;
   height: 212px;
 }
 
 .card {
   position: relative;
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(50px) saturate(1.4);
-  -webkit-backdrop-filter: blur(50px) saturate(1.4);
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), var(--elevation-3);
   transition:
     transform var(--duration-slow) var(--ease-spring),
     box-shadow var(--duration-base) var(--ease-standard),
@@ -1330,7 +1359,7 @@ p {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 0 10px 0 22px;
+  padding: 0 26px;
 }
 
 .pill-input input {
@@ -1341,13 +1370,16 @@ p {
   background: none;
   font: inherit;
   font-size: 16px;
+  font-weight: 500;
   color: #fff;
   caret-color: #fff;
-  text-shadow: 0 1px 8px rgba(60, 10, 30, 0.45);
+  text-shadow:
+    0 1px 2px rgba(70, 15, 35, 0.45),
+    0 0 14px rgba(70, 15, 35, 0.35);
 }
 
 .pill-input input::placeholder {
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .pill-icon {
@@ -1692,7 +1724,9 @@ p {
   padding: 0 28px;
   font-size: 14px;
   font-weight: 500;
-  text-shadow: 0 1px 8px rgba(60, 10, 30, 0.5);
+  text-shadow:
+    0 1px 2px rgba(70, 15, 35, 0.45),
+    0 0 14px rgba(70, 15, 35, 0.35);
 }
 
 .pill-caption span {
