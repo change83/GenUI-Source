@@ -84,3 +84,25 @@ export const recommendedTasks: RecommendedTask[] = [
     outputKind: 'web',
   },
 ]
+
+/** Background work the agent already has going, shown in the edge task drawer. */
+export const backgroundTasks: { id: string; title: string; subtitle: string; kind: OutputKind; progress: number }[] = [
+  {
+    id: 'bg-product-hunt',
+    title: 'Product Hunt',
+    subtitle: '5 of the latest electronic products analysis',
+    kind: 'report',
+    progress: 64,
+  },
+]
+
+export const archivedOutputs: Output[] = [
+  {
+    id: 'o-prd',
+    kind: 'report',
+    title: 'Smart Headset PRD v1114',
+    subtitle: 'PDF File · 18 pages',
+    createdAt: 'Yesterday',
+    unread: false,
+  },
+]

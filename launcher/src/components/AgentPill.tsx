@@ -141,7 +141,7 @@ function Confirm({ view, onConfirm }: { view: ConfirmView; onConfirm: (s: string
       <div className="confirm-options">
         {view.options.map((o) => (
           <button key={o} className={selected.includes(o) ? 'is-on' : ''} onClick={() => toggle(o)}>
-            {selected.includes(o) && <IconCheck size={11} />}
+            {selected.includes(o) && <IconCheck size={14} />}
             {o}
           </button>
         ))}

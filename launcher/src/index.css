@@ -137,8 +137,8 @@ p {
 }
 
 .topbar button {
-  width: 30px;
-  height: 26px;
+  width: 40px;
+  height: 34px;
   display: grid;
   place-items: center;
   color: rgba(80, 30, 40, 0.75);
@@ -208,7 +208,7 @@ p {
 .pinned-edit {
   position: absolute;
   right: 10px;
-  top: -34px;
+  top: -38px;
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -290,8 +290,8 @@ p {
   position: absolute;
   top: 8px;
   right: 8px;
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -1100,8 +1100,8 @@ p {
 }
 
 .icon-btn {
-  width: 26px;
-  height: 26px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -1135,7 +1135,7 @@ p {
 
 .convo-card header svg {
   flex: none;
-  margin-top: 2px;
+  margin-top: 0;
 }
 
 .convo-card h3 {
@@ -1350,6 +1350,14 @@ p {
   height: 25px;
   border-radius: 50%;
   pointer-events: none;
+  animation: spot-in 520ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes spot-in {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
 }
 
 .pill-spot::before,
@@ -1964,4 +1972,171 @@ p {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ---------- Edge task drawer ---------- */
+
+.drawer-edge {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 8px;
+  z-index: 1100;
+}
+
+.task-drawer {
+  position: fixed;
+  top: 76px;
+  right: 0;
+  bottom: 0;
+  width: 252px;
+  padding: 4px 20px 24px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  pointer-events: none;
+  z-index: 1100;
+}
+
+.task-drawer::-webkit-scrollbar {
+  display: none;
+}
+
+.task-drawer.is-open {
+  pointer-events: auto;
+}
+
+.task-drawer > * {
+  flex: none;
+  opacity: 0;
+  transform: translateX(calc(100% + 32px));
+  transition:
+    transform 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 240ms var(--ease-standard);
+  transition-delay: calc((3 - min(var(--i), 3)) * 20ms);
+}
+
+.task-drawer.is-open > * {
+  opacity: 1;
+  transform: none;
+  transition-delay: calc(var(--i) * 45ms);
+}
+
+.drawer-all {
+  align-self: flex-end;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px 8px 18px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.72);
+  -webkit-backdrop-filter: blur(80px) saturate(160%) brightness(1.06);
+  backdrop-filter: blur(80px) saturate(160%) brightness(1.06);
+  color: var(--color-on-surface);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.card.drawer-card {
+  position: relative;
+  overflow: visible;
+  padding: 18px 16px 16px;
+  border-radius: 24px;
+  background: var(--frost-1);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.drawer-card.is-running {
+  cursor: default;
+}
+
+.drawer-dot {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #22c55e;
+  z-index: 2;
+}
+
+.drawer-card.is-running .drawer-dot {
+  background: #ffa62b;
+  animation: spot-breathe 2.4s ease-in-out infinite;
+}
+
+.drawer-card header h3 {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--color-on-surface);
+}
+
+.drawer-card header p {
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--color-on-surface-variant);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.drawer-art {
+  height: 120px;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.drawer-card.kind-poster {
+  padding: 0;
+  overflow: hidden;
+}
+
+.drawer-card.kind-poster .drawer-art {
+  height: 240px;
+  border-radius: 24px;
+}
+
+.drawer-card.kind-poster .drawer-dot {
+  top: 10px;
+  left: 10px;
+}
+
+.drawer-progress {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  font-size: 10px;
+  color: var(--color-on-surface-variant);
+}
+
+.drawer-progress::before,
+.drawer-progress b {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.drawer-progress::before {
+  right: 0;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.drawer-progress b {
+  background: #ffa62b;
+  transition: width 200ms linear;
 }

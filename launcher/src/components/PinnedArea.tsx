@@ -73,7 +73,7 @@ export function PinnedArea({ widgets, outputs, onChange, onGrab, dragging }: Pro
           setLibrary(null)
         }}
       >
-        {editing ? <IconCheck size={13} /> : <IconEdit size={13} />}
+        {editing ? <IconCheck size={18} /> : <IconEdit size={18} />}
         {editing ? 'Done' : 'Edit'}
       </button>
 
@@ -97,14 +97,14 @@ export function PinnedArea({ widgets, outputs, onChange, onGrab, dragging }: Pro
                 aria-label="Unpin"
                 onClick={() => onChange(widgets.filter((x) => x.id !== w.id))}
               >
-                <IconClose size={11} />
+                <IconClose size={14} />
               </button>
             )}
           </div>
         ))}
         {(editing || widgets.length === 0) && (
           <button className="widget size-small widget-add" onClick={(e) => toggleLibrary(e.currentTarget)}>
-            <IconPlus size={22} />
+            <IconPlus size={28} />
             <span>Add widget</span>
             <small>or pin an agent output here</small>
           </button>

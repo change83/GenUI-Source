@@ -102,7 +102,7 @@ function StockWidget() {
         </span>
         <button className="chip-btn" onClick={() => setRange(range === 'Month' ? 'Week' : 'Month')}>
           {range}
-          <IconChevronDown size={10} />
+          <IconChevronDown size={12} />
         </button>
       </div>
       <div className="w-stock-chart">
@@ -152,13 +152,13 @@ function RunningWidget() {
     <div className="w-running">
       <div className="w-run-head">
         <span className="w-run-icon">
-          <IconRun size={16} />
+          <IconRun size={20} />
         </span>
         <div>
           <div className="w-title-s">Running Activity</div>
           <div className="w-meta">Feb 1–28</div>
         </div>
-        <IconMore size={14} className="w-more" />
+        <IconMore size={18} className="w-more" />
       </div>
       <div className="w-run-total">
         182,75 <small>km</small>
@@ -195,7 +195,7 @@ function ProjectWidget() {
     <div className="w-project">
       <div className="w-run-head">
         <span className="w-run-icon is-blue">
-          <IconFolder size={15} />
+          <IconFolder size={20} />
         </span>
         <div>
           <div className="w-title-s">Smart Headphones</div>
@@ -227,7 +227,7 @@ function NewsWidget() {
     <div className="w-news">
       <div className="w-run-head">
         <span className="w-run-icon is-amber">
-          <IconNews size={15} />
+          <IconNews size={20} />
         </span>
         <div className="w-title-s">Following</div>
       </div>
@@ -248,7 +248,7 @@ function OutputWidget({ output }: { output?: Output }) {
     <div className="w-output">
       <OutputThumb kind={output.kind} />
       <div className="w-output-meta">
-        <Icon size={12} />
+        <Icon size={16} />
         <span>{output.title}</span>
       </div>
     </div>
