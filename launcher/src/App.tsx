@@ -13,6 +13,7 @@ import {
 } from './components/Icons'
 import { OutputThumb } from './components/OutputThumb'
 import { PinnedArea } from './components/PinnedArea'
+import { useTrailingCards } from './useTrailingCards'
 import {
   conversation,
   initialOutputs,
@@ -93,6 +94,7 @@ export default function App() {
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null)
   const [moving, setMoving] = useState(false)
   const groupRef = useRef<HTMLDivElement>(null)
+  useTrailingCards(groupRef, pos, '.feed > .card, .feed-row > .card')
   useEffect(() => {
     if (muted) window.speechSynthesis?.cancel()
   }, [muted])
