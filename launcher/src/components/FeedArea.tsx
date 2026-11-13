@@ -117,7 +117,7 @@ export function FeedArea({
             <span>{t.deliverable}</span>
           </div>
           <button type="button" className="task-run">
-            Run
+            {launching.has(t.id) ? 'In progress' : 'Run'}
           </button>
         </article>
       ))}

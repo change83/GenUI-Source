@@ -4,8 +4,10 @@ import { GlassRenderer } from './liquidGlass.js'
 type Pt = { x: number; y: number }
 
 const BACKDROP = '/bg.jpg'
-const BALL_SIZE = 60
+const BALL_SIZE = 30
 const GLOW_MS = 900
+// The rim band sits just outside the card, like the collaboration card's 6px glass edge.
+const RIM = 6
 const FADE_MS = 160
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
@@ -13,7 +15,7 @@ const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
 /**
  * Plays the task-launch sequence on its own liquid-glass pane, using the same renderer and
  * material as the agent ball:
- * 1. The pane wraps the card exactly like the collaboration card (edge glow only, a 6px band).
+ * 1. A 6px edge-glow band (as on the collaboration card) wraps the outside of the card.
  * 2. The card fades and the pane springs, with overshoot, into a ball.
  * 3. The ball flies along an arc into the agent ball, stretching along its velocity.
  * Resolves when the ball has merged; falls back to a plain fade when WebGL is unavailable.
@@ -43,9 +45,9 @@ export async function launchIntoBall(card: HTMLElement, target: Pt, radius = 22)
   const start = { x: r.left + r.width / 2, y: r.top + r.height / 2 }
   const place = (p: Pt) => glass.setPosition({ x: p.x / vw, y: p.y / vh })
 
-  glass.setParams({ width: r.width, height: r.height, radius, liquid: 0 })
+  glass.setParams({ width: r.width + RIM * 2, height: r.height + RIM * 2, radius: radius + RIM, liquid: 0 })
   glass.setPresentation({ edgeGlowOnly: 1 })
-  glass.setHollow(6)
+  glass.setHollow(RIM)
   place(start)
   requestAnimationFrame(() => canvas.classList.add('is-visible'))
   await wait(GLOW_MS)
@@ -55,7 +57,7 @@ export async function launchIntoBall(card: HTMLElement, target: Pt, radius = 22)
   glass.setHollow(0)
 
   // Under-damped springs give the collapse and landing their bounce.
-  const size = { w: r.width, h: r.height, rad: radius, vw: 0, vh: 0, vr: 0 }
+  const size = { w: r.width + RIM * 2, h: r.height + RIM * 2, rad: radius + RIM, vw: 0, vh: 0, vr: 0 }
   let edge = 1
   let flight = 0
   let flightV = 0

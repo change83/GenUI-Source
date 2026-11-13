@@ -1246,7 +1246,10 @@ p {
 }
 
 .task-card.is-launching .task-run {
-  opacity: 0;
+  opacity: 1;
+  transform: none;
+  background: rgba(13, 110, 253, 0.12);
+  color: var(--color-primary);
 }
 
 /* Full-screen pane for the task-launch glass (see GlassLauncher); under the agent ball's canvas. */
@@ -1339,20 +1342,27 @@ p {
 /* Soft blue light on the ball's upper-right edge while a task runs; outside the shell so it is never clipped. */
 .pill-spot {
   position: absolute;
-  top: 2px;
-  right: 2px;
-  width: 16px;
-  height: 16px;
+  top: 0;
+  right: 0;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  background: radial-gradient(circle, #e6f3ff 0, #6fb4ff 22%, rgba(47, 123, 255, 0.55) 45%, rgba(47, 123, 255, 0) 72%);
+  background: radial-gradient(
+    circle,
+    #bfe6ff 0,
+    #5cc2ff 18%,
+    #2fa6ff 38%,
+    rgba(36, 150, 255, 0.55) 58%,
+    rgba(36, 150, 255, 0.18) 76%,
+    rgba(36, 150, 255, 0) 100%
+  );
   pointer-events: none;
-  animation: spot-breathe 2s ease-in-out infinite;
+  animation: spot-breathe 2.4s ease-in-out infinite;
 }
 
 @keyframes spot-breathe {
   50% {
-    transform: scale(1.25);
-    opacity: 0.75;
+    opacity: 0.6;
   }
 }
 
