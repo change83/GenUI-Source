@@ -39,7 +39,7 @@ type Mode = 'auto' | 'typing' | 'camera'
 
 const STEPS = ['Understanding your request', 'Searching sources', 'Analyzing findings', 'Drafting the deliverable', 'Polishing the result']
 const CONFIRM_AT = 42
-const GROUP_GAP = 80
+const GROUP_GAP = 60
 
 function confirmFor(kind: OutputKind, title: string): ConfirmView | null {
   if (kind === 'report')
@@ -356,7 +356,6 @@ export default function App() {
           setJob((j) => (j ? { ...j, confirmed: true } : j))
           announce('Got it, continuing.')
         }}
-        onDefer={() => setDeferred(true)}
         caption={caption}
         onCaptionClick={() => {
           const o = outputs.find((x) => x.id === flash?.outputId)

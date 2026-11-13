@@ -24,7 +24,6 @@ interface Props {
   awaitingConfirm: boolean
   confirm: ConfirmView | null
   onConfirm: (selected: string[]) => void
-  onDefer: () => void
   caption: string
   onCaptionClick: () => void
 }
@@ -68,16 +67,12 @@ function formFor(p: { state: PillState; vw: number; hover: boolean; busy: boolea
     case 'camera':
       return { glass: { ...BALL, width: fit(412), height: 312, radius: 32, liquid: 0, edge: 1 }, inset: 6 }
     case 'confirm':
-      return { glass: { ...BALL, width: fit(432), height: 256, radius: 36, liquid: 0, edge: 1 }, inset: 6 }
+      return { glass: { ...BALL, width: fit(432), height: 206, radius: 36, liquid: 0, edge: 1 }, inset: 6 }
     case 'caption': {
       const w = Math.max(180, Math.min(fit(640), Math.ceil(textWidth(p.caption)) + 56))
       return { glass: { ...BALL, width: w, height: 52, radius: 26, glow: 55, liquid: 0 }, inset: 0 }
     }
   }
-}
-
-function Orb({ size = 22 }: { size?: number }) {
-  return <span className="orb" style={{ width: size, height: size }} />
 }
 
 function Camera() {
@@ -134,15 +129,7 @@ function Camera() {
   )
 }
 
-function Confirm({
-  view,
-  onConfirm,
-  onDefer,
-}: {
-  view: ConfirmView
-  onConfirm: (s: string[]) => void
-  onDefer: () => void
-}) {
+function Confirm({ view, onConfirm }: { view: ConfirmView; onConfirm: (s: string[]) => void }) {
   const [selected, setSelected] = useState<string[]>(view.multi ? view.options.slice(0, 3) : [view.options[0]])
   const toggle = (o: string) => {
     if (!view.multi) return setSelected([o])
@@ -150,13 +137,6 @@ function Confirm({
   }
   return (
     <div className="pill-confirm">
-      <div className="confirm-head">
-        <Orb size={20} />
-        <div>
-          <span className="confirm-eyebrow">Needs your confirmation · task paused</span>
-          <strong>{view.title}</strong>
-        </div>
-      </div>
       <p className="confirm-q">{view.question}</p>
       <div className="confirm-options">
         {view.options.map((o) => (
@@ -167,9 +147,6 @@ function Confirm({
         ))}
       </div>
       <div className="confirm-actions">
-        <button className="btn-ghost" onClick={onDefer}>
-          Later
-        </button>
         <button className="btn-primary" disabled={selected.length === 0} onClick={() => onConfirm(selected)}>
           Confirm
         </button>
@@ -284,7 +261,7 @@ export function AgentPill(props: Props) {
 
           {state === 'confirm' && props.confirm && (
             <div className="pill-content pill-card" style={box}>
-              <Confirm view={props.confirm} onConfirm={props.onConfirm} onDefer={props.onDefer} />
+              <Confirm view={props.confirm} onConfirm={props.onConfirm} />
             </div>
           )}
 

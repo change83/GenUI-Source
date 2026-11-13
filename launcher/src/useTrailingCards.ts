@@ -4,7 +4,7 @@ type Pt = { x: number; y: number }
 type Sample = Pt & { t: number }
 type Follower = Pt & { vx: number; vy: number; delay: number }
 
-const BASE_DELAY = 500
+const BASE_DELAY = 200
 const STEP_DELAY = 100
 // Critically damped spring: starts and stops at zero velocity, so each card eases in and out.
 const OMEGA = 5

@@ -1,11 +1,5 @@
 @import './tokens.css';
 
-@property --spin {
-  syntax: '<angle>';
-  initial-value: 0deg;
-  inherits: false;
-}
-
 *,
 *::before,
 *::after {
@@ -111,7 +105,7 @@ p {
 }
 
 .pinned.glass-panel {
-  background: var(--frost-2);
+  background: var(--frost-3);
 }
 
 .card.convo-card,
@@ -225,7 +219,7 @@ p {
   align-items: center;
   gap: 4px;
   padding: 4px 11px;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
   border-radius: var(--radius-pill);
   background: rgba(255, 255, 255, 0.22);
@@ -332,7 +326,7 @@ p {
 }
 
 .widget-add small {
-  font-size: 12px;
+  font-size: 10px;
   opacity: 0.8;
   max-width: 130px;
 }
@@ -353,7 +347,7 @@ p {
 }
 
 .widget-library-title {
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 500;
   color: var(--color-on-surface-muted);
   padding: 2px 6px 6px;
@@ -379,14 +373,14 @@ p {
 }
 
 .widget-library span {
-  font-size: 12px;
+  font-size: 10px;
   color: var(--color-on-surface-variant);
 }
 
 /* ---------- Widgets ---------- */
 
 .w-title {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
 }
 
@@ -396,12 +390,12 @@ p {
 }
 
 .w-meta {
-  font-size: 12px;
+  font-size: 10px;
   color: var(--color-on-surface-muted);
 }
 
 .link-btn {
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 700;
   color: var(--color-primary);
 }
@@ -410,7 +404,7 @@ p {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  font-size: 12px;
+  font-size: 10px;
   padding: 3px 7px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-surface-container-highest);
@@ -439,7 +433,7 @@ p {
 .w-cal-days button {
   width: 22px;
   height: 22px;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 500;
   border-radius: 50%;
   transition: background var(--duration-fast);
@@ -465,7 +459,7 @@ p {
 
 .w-cal-hours span {
   display: block;
-  font-size: 12px;
+  font-size: 10px;
   color: var(--color-on-surface-muted);
   font-variant-numeric: tabular-nums;
 }
@@ -481,7 +475,7 @@ p {
   right: 0;
   padding: 5px 8px;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 10px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -504,7 +498,7 @@ p {
   gap: 6px;
   justify-content: space-between;
   color: var(--color-on-surface-variant);
-  font-size: 12px;
+  font-size: 10px;
 }
 
 .w-cal-event em {
@@ -520,7 +514,7 @@ p {
 }
 
 .w-cal-empty {
-  font-size: 12px;
+  font-size: 10px;
   color: var(--color-on-surface-muted);
   padding-top: 40px;
   text-align: center;
@@ -533,13 +527,13 @@ p {
 }
 
 .w-stock-value {
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 700;
   letter-spacing: -0.3px;
 }
 
 .w-stock-value small {
-  font-size: 12px;
+  font-size: 10px;
 }
 
 .w-stock-chart {
@@ -552,7 +546,7 @@ p {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  font-size: 12px;
+  font-size: 10px;
   color: var(--color-on-surface-muted);
   padding: 2px 0;
 }
@@ -568,7 +562,7 @@ p {
 .w-stock-x {
   display: flex;
   justify-content: space-between;
-  font-size: 12px;
+  font-size: 10px;
   white-space: nowrap;
   color: var(--color-on-surface-muted);
   margin-top: 6px;
@@ -606,14 +600,14 @@ p {
 }
 
 .w-run-total {
-  font-size: 26px;
+  font-size: 20px;
   font-weight: 700;
   letter-spacing: -0.5px;
   margin: 10px 0 8px;
 }
 
 .w-run-total small {
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 500;
 }
 
@@ -651,7 +645,7 @@ p {
 }
 
 .w-weather-temp {
-  font-size: 36px;
+  font-size: 20px;
   font-weight: 700;
   letter-spacing: -1px;
   line-height: 1.1;
@@ -665,7 +659,7 @@ p {
 .w-progress div {
   display: flex;
   justify-content: space-between;
-  font-size: 12px;
+  font-size: 10px;
   color: var(--color-on-surface-variant);
   margin-bottom: 4px;
 }
@@ -697,7 +691,7 @@ p {
 
 .w-news-item em {
   font-style: normal;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 700;
   color: var(--color-warning);
   background: var(--color-warning-container);
@@ -722,7 +716,7 @@ p {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 500;
   padding: 8px 12px 10px;
   color: var(--color-on-surface);
@@ -813,7 +807,7 @@ p {
   position: absolute;
   right: 10px;
   bottom: 10px;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.5px;
   color: #fff;
@@ -930,7 +924,7 @@ p {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 500;
   letter-spacing: 0.25px;
   color: var(--color-on-surface-variant);
@@ -1001,7 +995,7 @@ p {
 .output-title {
   position: relative;
   padding: 14px 14px 0;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.25;
   max-width: 150px;
@@ -1093,7 +1087,7 @@ p {
 }
 
 .convo-card h3 {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.25;
 }
@@ -1170,13 +1164,13 @@ p {
 .task-body span {
   display: block;
   margin-top: 12px;
-  font-size: 12px;
+  font-size: 10px;
   color: var(--color-on-surface-variant);
 }
 
 .task-cta {
   align-self: flex-end;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 500;
   color: var(--color-primary);
   opacity: 0;
@@ -1252,27 +1246,6 @@ p {
   --content: 1;
 }
 
-.pill-hint {
-  font-size: 11.5px;
-  color: rgba(255, 255, 255, 0.9);
-  letter-spacing: 0.3px;
-  white-space: nowrap;
-  text-shadow: 0 1px 6px rgba(120, 30, 40, 0.4);
-  opacity: 0;
-  animation:
-    fade-up 400ms 1.2s var(--ease-out) forwards,
-    hint-out 400ms 5s var(--ease-out) forwards;
-}
-
-.pill-wrap:hover .pill-hint {
-  animation: fade-up 300ms var(--ease-out) forwards;
-}
-
-@keyframes hint-out {
-  to {
-    opacity: 0;
-  }
-}
 
 /* Size and radius are written every frame by GlassPill from the spring state. */
 .pill-shell {
@@ -1339,21 +1312,6 @@ p {
   background: #111;
 }
 
-.orb {
-  flex: none;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), transparent 45%),
-    conic-gradient(from var(--spin), #ff7ab6, #9b6bff, #4a86ff, #5ce1e6, #ff7ab6);
-  box-shadow: 0 0 12px rgba(155, 107, 255, 0.45);
-  animation: spin 6s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    --spin: 360deg;
-  }
-}
 
 /* listening */
 
@@ -1374,7 +1332,7 @@ p {
 }
 
 .pill-transcript-label {
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 500;
   color: var(--color-primary);
   background: var(--color-primary-container);
@@ -1462,22 +1420,6 @@ p {
   transform: scale(1.06);
 }
 
-.pill-shortcuts {
-  position: absolute;
-  top: calc(100% + 10px);
-  display: flex;
-  gap: 14px;
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.85);
-  white-space: nowrap;
-  animation: fade-up 300ms 300ms var(--ease-out) both;
-}
-
-.pill-shortcuts span {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
 
 /* working */
 
@@ -1505,7 +1447,7 @@ p {
 }
 
 .working-text span {
-  font-size: 12px;
+  font-size: 10px;
   opacity: 0.85;
 }
 
@@ -1521,7 +1463,7 @@ p {
   border: 1.5px solid rgba(255, 255, 255, 0.8);
   display: grid;
   place-items: center;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 700;
   text-shadow: none;
   background: rgba(255, 255, 255, 0.22);
@@ -1566,38 +1508,18 @@ p {
   height: 100%;
   display: flex;
   flex-direction: column;
-  padding: 18px 18px 16px;
+  padding: 20px;
 }
 
-.confirm-head {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
 
-.confirm-head > div {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
 
-.confirm-eyebrow {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--color-warning);
-}
 
-.confirm-head strong {
-  font-size: 14px;
-  font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
 .confirm-q {
-  font-size: 14px;
-  margin: 14px 0 10px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 0 0 14px;
 }
 
 .confirm-options {
@@ -1733,7 +1655,7 @@ p {
   gap: 7px;
   padding: 6px 13px;
   border-radius: var(--radius-pill);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
   white-space: nowrap;
   color: #fff;
@@ -1796,7 +1718,7 @@ p {
 }
 
 .demo-panel > span {
-  font-size: 12px;
+  font-size: 10px;
   color: rgba(255, 255, 255, 0.85);
   letter-spacing: 0.5px;
   padding: 0 8px 4px;
@@ -1858,7 +1780,7 @@ p {
 }
 
 .preview-body h2 {
-  font-size: 22px;
+  font-size: 20px;
   line-height: 28px;
 }
 
