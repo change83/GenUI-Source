@@ -5,9 +5,13 @@ type Pt = { x: number; y: number }
 
 const BACKDROP = '/bg-dusk.jpg'
 const BALL_SIZE = 30
-const GLOW_MS = 900
-// The rim band sits just outside the card, like the collaboration card's 6px glass edge.
+const GLOW_MS = 2000
+// The rim band sits just outside the card, like the collaboration card's 6px glass edge, and
+// tucks OVERLAP px under the card's edge so no backdrop shows between them.
 const RIM = 6
+const OVERLAP = 3
+const FLIGHT_DELAY = 0.38
+const VANISH_LEAD = 0.1
 const FADE_MS = 160
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
@@ -15,9 +19,11 @@ const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
 /**
  * Plays the task-launch sequence on its own liquid-glass pane, using the same renderer and
  * material as the agent ball:
- * 1. A 6px edge-glow band (as on the collaboration card) wraps the outside of the card.
+ * 1. A 6px edge-glow band (as on the collaboration card) wraps the outside of the card and
+ *    breathes for a moment while the agent prepares the task.
  * 2. The card fades and the pane springs, with overshoot, into a ball.
- * 3. The ball flies along an arc into the agent ball, stretching along its velocity.
+ * 3. The ball flies along an arc toward the agent ball, stretching along its velocity, and
+ *    fades out just before it lands.
  * Resolves when the ball has merged; falls back to a plain fade when WebGL is unavailable.
  */
 export async function launchIntoBall(card: HTMLElement, target: Pt, radius = 22): Promise<void> {
@@ -47,10 +53,11 @@ export async function launchIntoBall(card: HTMLElement, target: Pt, radius = 22)
 
   glass.setParams({ width: r.width + RIM * 2, height: r.height + RIM * 2, radius: radius + RIM, liquid: 0 })
   glass.setPresentation({ edgeGlowOnly: 1 })
-  glass.setHollow(RIM)
+  glass.setHollow(RIM + OVERLAP)
   place(start)
   requestAnimationFrame(() => canvas.classList.add('is-visible'))
-  await wait(GLOW_MS)
+  await breathe(glass, GLOW_MS)
+  glass.setParams({ glow: BALL.glow, hue1: BALL.hue1, hue2: BALL.hue2, hue3: BALL.hue3 })
 
   card.style.transition = `opacity ${FADE_MS}ms`
   card.style.opacity = '0'
@@ -63,6 +70,7 @@ export async function launchIntoBall(card: HTMLElement, target: Pt, radius = 22)
   let flightV = 0
   let flying = false
   let elapsed = 0
+  const vanishAt = FLIGHT_DELAY + flightDuration() - VANISH_LEAD
   let prev = start
   const control = {
     x: (start.x + target.x) / 2 + (target.x - start.x) * 0.15,
@@ -92,8 +100,8 @@ export async function launchIntoBall(card: HTMLElement, target: Pt, radius = 22)
       ;[size.rad, size.vr] = spring(size.rad, size.vr, BALL_SIZE / 2, 170, 13)
       edge += (0 - edge) * (1 - Math.exp(-dt * 8))
 
-      if (!flying && elapsed > 0.38) flying = true
-      if (flying) [flight, flightV] = spring(flight, flightV, 1, 46, 9.5)
+      if (!flying && elapsed > FLIGHT_DELAY) flying = true
+      if (flying) [flight, flightV] = spring(flight, flightV, 1, FLIGHT_K, FLIGHT_C)
       const t = Math.min(1.06, flight)
       const pos = along(t)
       const vx = (pos.x - prev.x) / Math.max(dt, 0.001)
@@ -111,10 +119,10 @@ export async function launchIntoBall(card: HTMLElement, target: Pt, radius = 22)
       glass.setTransientMotion({ x: vx, y: vy, amount: Math.min(0.9, speed / 2600) })
       place(pos)
 
-      const arrived = flying && Math.abs(1 - flight) < 0.02 && Math.abs(flightV) < 0.25
-      if (arrived || elapsed > 2.4) {
+      if (elapsed >= vanishAt) {
+        canvas.style.transition = `opacity ${VANISH_LEAD * 1000}ms linear`
         canvas.classList.remove('is-visible')
-        resolve()
+        setTimeout(resolve, VANISH_LEAD * 1000)
         return
       }
       requestAnimationFrame(step)
@@ -122,7 +130,46 @@ export async function launchIntoBall(card: HTMLElement, target: Pt, radius = 22)
     requestAnimationFrame(step)
   })
 
-  await wait(FADE_MS)
   glass.dispose()
   canvas.remove()
+}
+
+const FLIGHT_K = 46
+const FLIGHT_C = 9.5
+
+// Seconds the flight spring takes to first reach the agent ball, so the fade can start ahead of it.
+function flightDuration() {
+  const dt = 1 / 240
+  let x = 0
+  let v = 0
+  let t = 0
+  while (x < 0.98 && t < 3) {
+    v += (FLIGHT_K * (1 - x) - FLIGHT_C * v) * dt
+    x += v * dt
+    t += dt
+  }
+  return t
+}
+
+const wrapHue = (h: number) => ((h % 360) + 360) % 360
+
+// Glow pulses and its hues drift while the agent "prepares" the task.
+function breathe(glass: GlassRenderer, ms: number) {
+  return new Promise<void>((resolve) => {
+    const t0 = performance.now()
+    const frame = (now: number) => {
+      const t = (now - t0) / 1000
+      const pulse = Math.sin(t * Math.PI * 2 * 0.9)
+      const drift = Math.sin(t * Math.PI * 2 * 0.45) * 40
+      glass.setParams({
+        glow: BALL.glow * (1 + 0.45 * pulse),
+        hue1: wrapHue(BALL.hue1 + drift),
+        hue2: wrapHue(BALL.hue2 + drift),
+        hue3: wrapHue(BALL.hue3 - drift),
+      })
+      if (now - t0 >= ms) resolve()
+      else requestAnimationFrame(frame)
+    }
+    requestAnimationFrame(frame)
+  })
 }
