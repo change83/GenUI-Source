@@ -113,7 +113,7 @@ varying vec2 vUv;
 uniform vec2 uResolution,uShape,uCenter;
 uniform sampler2D uSharp,uBlurred;
 uniform vec3 uHues,uTransientMotion,uModeWeights;
-uniform float uEdgeGlowOnly,uTailPolarityOffset;
+uniform float uEdgeGlowOnly,uTailPolarityOffset,uHollow;
 uniform float uRadius,uTime,uScene,uHighlight,uReflection,uRefraction,uOpacity,uDispersion,uGlow,uLiquid,uPixel,uAmplitude,uGlowBlend,uGlowMix;
 float sat(float x){return clamp(x,0.,1.);}
 float stableLength(vec2 v){float m=max(max(abs(v.x),abs(v.y)),.00001);return length(v/m)*m;}
@@ -311,6 +311,7 @@ void main(){
  if(abs(p.x)>reach.x||abs(p.y)>reach.y){gl_FragColor=vec4(0.);return;}
  float d=shape(p); float aa=uPixel*1.2;
  float shadow=exp(-max(shape(p-vec2(.012,-.022)),0.)*35.)*.23;
+ if(uHollow>0.)shadow*=smoothstep(-aa,aa,d);
  vec4 outColor=vec4(0.,0.,0.,shadow);
  
  if(d<aa*2.){
@@ -353,14 +354,17 @@ void main(){
   glass+=thin*(.10+uHighlight*.4)*(key+rim+.18);
   float noise=fract(sin(dot(mod(gl_FragCoord.xy,vec2(128.)),vec2(12.9898,78.233)))*43758.5453)-.5;
   glass+=noise*.003;
-  outColor=mix(outColor,vec4(clamp(glass,0.,1.),1.),1.-smoothstep(-aa,aa,d));
+  float body=1.-smoothstep(-aa,aa,d);
+  // Hollow panes keep only an outer band, uHollow device pixels deep, so DOM content shows through the middle.
+  if(uHollow>0.)body*=smoothstep(-uHollow*uPixel-aa,-uHollow*uPixel+aa,d);
+  outColor=mix(outColor,vec4(clamp(glass,0.,1.),1.),body);
  }
  gl_FragColor=outColor;
 }`;
 
 class GlassRenderer {
  constructor(canvas,onStatus=()=>{}){
-  this.canvas=canvas; this.onStatus=onStatus; this.params={...DEFAULTS}; this.scene='aurora'; this.playing=true; this.quality='auto'; this._scale=1; this._fps=60; this._time=0; this._last=0; this._frames=0; this._sampleStart=0; this._disposed=false; this._lost=false; this._backgroundVersion=0; this._backgroundSource=null; this._backgroundTexture=null; this._targets=[];this._backgroundDirty=true;this._blurDirty=true;this._motionResponse={speedMultiplier:1,amplitudeMultiplier:1};this._position={x:.5,y:.5};this._transientMotion={x:1,y:0,amount:0};this._morphMotion={x:1,y:0,amount:0};this._edgeGlowOnly=0;this._modeWeights=[1,0,0];this._modeTransition=null;
+  this.canvas=canvas; this.onStatus=onStatus; this.params={...DEFAULTS}; this.scene='aurora'; this.playing=true; this.quality='auto'; this._scale=1; this._fps=60; this._time=0; this._last=0; this._frames=0; this._sampleStart=0; this._disposed=false; this._lost=false; this._backgroundVersion=0; this._backgroundSource=null; this._backgroundTexture=null; this._targets=[];this._backgroundDirty=true;this._blurDirty=true;this._motionResponse={speedMultiplier:1,amplitudeMultiplier:1};this._position={x:.5,y:.5};this._transientMotion={x:1,y:0,amount:0};this._morphMotion={x:1,y:0,amount:0};this._edgeGlowOnly=0;this._hollow=0;this._modeWeights=[1,0,0];this._modeTransition=null;
   this._motion=window.matchMedia('(prefers-reduced-motion: reduce)'); this._reduced=this._motion.matches;this.playing=!this._reduced;
   this._onMotion=()=>{this._reduced=this._motion.matches;if(this._reduced)this.playing=false;this._last=0;this.renderOnce();this._schedule();};
   this._motion.addEventListener?.('change',this._onMotion);
@@ -386,7 +390,7 @@ class GlassRenderer {
   this._backgroundPass=make(BACKGROUND_FRAGMENT,['Resolution','ImageSize','Background','HasBackground','Scene','Pixel']);
   this._downsamplePass=make(DOWNSAMPLE_FRAGMENT,['Source','Footprint']);
   this._gaussianPass=make(GAUSSIAN_FRAGMENT,['Source','Step','Sigma']);
-  this._glassPass=make(FRAGMENT,['Resolution','Shape','Center','Radius','Time','Scene','Highlight','Reflection','Refraction','Opacity','Dispersion','Glow','Liquid','Pixel','Sharp','Blurred','Hues','Amplitude','GlowBlend','GlowMix','ModeWeights','TransientMotion','EdgeGlowOnly','TailPolarityOffset']);
+  this._glassPass=make(FRAGMENT,['Resolution','Shape','Center','Radius','Time','Scene','Highlight','Reflection','Refraction','Opacity','Dispersion','Glow','Liquid','Pixel','Sharp','Blurred','Hues','Amplitude','GlowBlend','GlowMix','ModeWeights','TransientMotion','EdgeGlowOnly','TailPolarityOffset','Hollow']);
   this.program=this._glassPass.program;this.uniforms=this._glassPass.u;
   this.buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,this.buffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
   this._targets=[];this._backgroundDirty=true;this._blurDirty=true;this._backgroundTexture=this._createBackgroundTexture(this._backgroundSource);
@@ -475,6 +479,7 @@ class GlassRenderer {
   const x=travel.x*travel.amount+morph.x*morph.amount,y=travel.y*travel.amount+morph.y*morph.amount,length=Math.hypot(x,y);
   return {x:length>1e-6?x/length:travel.x,y:length>1e-6?y/length:travel.y,amount:Math.min(1,travel.amount+morph.amount),tailPolarity:travel.amount>1e-6?(travel.tailPolarity??1):1};
  }
+ setHollow(px=0){if(!Number.isFinite(px))return;this._hollow=Math.max(0,px);this.renderOnce();}
  setPresentation({edgeGlowOnly=0}={}){
   if(!Number.isFinite(edgeGlowOnly))return;
   this._edgeGlowOnly=Math.max(0,Math.min(1,edgeGlowOnly));this.renderOnce();
@@ -599,7 +604,7 @@ class GlassRenderer {
   gl.uniform2f(u.Resolution,this.canvas.width,this.canvas.height);gl.uniform2f(u.Shape,shape.width,shape.height);gl.uniform1f(u.Radius,shape.radius);gl.uniform1f(u.Time,this._time);gl.uniform1f(u.Scene,['aurora','studio','grid','sunset'].indexOf(this.scene));gl.uniform1f(u.Pixel,1/Math.min(this.canvas.width,this.canvas.height));
   gl.uniform1f(u.Liquid,effectiveLiquid(p.liquid));
   gl.uniform3f(u.ModeWeights,...this._modeWeights);
-  const motion=this._combinedMotion();gl.uniform3f(u.TransientMotion,motion.x,-motion.y,motion.amount);gl.uniform1f(u.TailPolarityOffset,motion.tailPolarity-1);gl.uniform1f(u.EdgeGlowOnly,this._edgeGlowOnly);
+  const motion=this._combinedMotion();gl.uniform3f(u.TransientMotion,motion.x,-motion.y,motion.amount);gl.uniform1f(u.TailPolarityOffset,motion.tailPolarity-1);gl.uniform1f(u.EdgeGlowOnly,this._edgeGlowOnly);gl.uniform1f(u.Hollow,this._hollow*this.canvas.width/Math.max(1,this.cssWidth));
   for(const key of ['highlight','reflection','refraction','opacity','dispersion','glow'])gl.uniform1f(u[key[0].toUpperCase()+key.slice(1)],p[key]/100);
   gl.uniform3f(u.Hues,p.hue1/360,p.hue2/360,p.hue3/360);gl.uniform1f(u.Amplitude,this._motionResponse.amplitudeMultiplier);gl.uniform1f(u.GlowMix,p.glowMix/100);gl.uniform1f(u.GlowBlend,Math.max(0,BLEND_MODES.indexOf(p.glowBlend)));gl.drawArrays(gl.TRIANGLES,0,6);
  }

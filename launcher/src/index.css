@@ -1249,58 +1249,20 @@ p {
   opacity: 0;
 }
 
-/* Same soft, hue-shifting inner rim light the agent glass shows around the collaboration card. */
-.task-card.is-launching::before {
-  content: '';
-  position: absolute;
+/* Full-screen pane for the task-launch glass (see GlassLauncher); under the agent ball's canvas. */
+.launch-canvas {
+  position: fixed;
   inset: 0;
-  border-radius: inherit;
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.75),
-    inset 12px 0 20px -10px hsl(270 95% 66% / 0.95),
-    inset -12px 0 20px -10px hsl(185 90% 58% / 0.9),
-    inset 0 12px 20px -10px hsl(25 95% 64% / 0.85),
-    inset 0 -12px 20px -10px hsl(300 90% 68% / 0.95);
-  animation:
-    rim-in 260ms var(--ease-standard) both,
-    rim-hue 1.4s linear infinite;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
-  z-index: 2;
-}
-
-@keyframes rim-in {
-  from {
-    opacity: 0;
-  }
-}
-
-@keyframes rim-hue {
-  to {
-    filter: hue-rotate(360deg);
-  }
-}
-
-/* Orb the card collapses into: styled after the liquid-glass agent ball (pale glass, top-left
-   highlight, violet-blue core toward the bottom-right, bright rim). */
-.task-orb {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 60px;
-  height: 60px;
-  margin: -30px 0 0 -30px;
-  border-radius: 50%;
+  z-index: 1140;
   opacity: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 30% 26%, rgba(255, 255, 255, 0.95) 0 6%, rgba(255, 255, 255, 0.4) 16%, transparent 34%),
-    radial-gradient(circle at 66% 70%, rgba(70, 80, 255, 0.95) 0, rgba(140, 80, 255, 0.75) 20%, rgba(255, 110, 190, 0.4) 40%, transparent 58%),
-    radial-gradient(circle at 50% 45%, rgba(255, 236, 242, 0.9), rgba(250, 190, 210, 0.85) 70%, rgba(255, 255, 255, 0.9) 100%);
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.7),
-    inset -4px -6px 12px rgba(120, 70, 255, 0.35),
-    0 6px 16px rgba(90, 20, 60, 0.25);
-  z-index: 3;
+  transition: opacity 180ms var(--ease-standard);
+}
+
+.launch-canvas.is-visible {
+  opacity: 1;
 }
 
 

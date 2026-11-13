@@ -39,8 +39,18 @@ interface Options {
   backdrop: string
 }
 
-// The renderer only accepts data URLs for background images.
-async function toDataUrl(url: string): Promise<string> {
+// The renderer only accepts data URLs for background images; cached so extra panes start instantly.
+const dataUrls = new Map<string, Promise<string>>()
+export function toDataUrl(url: string): Promise<string> {
+  let cached = dataUrls.get(url)
+  if (!cached) {
+    cached = readDataUrl(url)
+    dataUrls.set(url, cached)
+  }
+  return cached
+}
+
+async function readDataUrl(url: string): Promise<string> {
   const blob = await (await fetch(url)).blob()
   return new Promise((resolve, reject) => {
     const reader = new FileReader()

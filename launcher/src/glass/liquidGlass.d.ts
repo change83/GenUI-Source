@@ -28,6 +28,9 @@ export class GlassRenderer {
   setPosition(p: { x?: number; y?: number }): { x: number; y: number }
   setMorphMotion(m: { x?: number; y?: number; amount?: number }): void
   setPresentation(p: { edgeGlowOnly?: number }): void
+  /** Keep only an outer band this many CSS pixels deep; 0 renders the full pane. */
+  setHollow(px: number): void
+  setTransientMotion(m: { x?: number; y?: number; amount?: number; tailPolarity?: number }): void
   setBackgroundImage(dataUrl: string | null): Promise<boolean>
   setPlaying(playing: boolean): void
   setQuality(q: 'auto' | 'high' | 'low'): void
