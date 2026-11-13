@@ -29,7 +29,7 @@ interface Props {
 }
 
 const BOTTOM = 40
-const BACKDROP = '/bg.jpg'
+const BACKDROP = '/bg-dusk.jpg'
 
 function useViewport() {
   const [w, setW] = useState(() => window.innerWidth)

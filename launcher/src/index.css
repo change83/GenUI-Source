@@ -48,7 +48,7 @@ p {
 .bg {
   position: fixed;
   inset: 0;
-  background: #e9a59c url('/bg.jpg') center / cover no-repeat;
+  background: #b9786c url('/bg-dusk.jpg') center / cover no-repeat;
 }
 
 /* ---------- Glass primitives ---------- */

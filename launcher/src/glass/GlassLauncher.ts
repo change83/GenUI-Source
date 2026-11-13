@@ -3,7 +3,7 @@ import { GlassRenderer } from './liquidGlass.js'
 
 type Pt = { x: number; y: number }
 
-const BACKDROP = '/bg.jpg'
+const BACKDROP = '/bg-dusk.jpg'
 const BALL_SIZE = 30
 const GLOW_MS = 900
 // The rim band sits just outside the card, like the collaboration card's 6px glass edge.
