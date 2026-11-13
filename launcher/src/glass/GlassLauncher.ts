@@ -10,6 +10,7 @@ const GLOW_MS = 2000
 // tucks OVERLAP px under the card's edge so no backdrop shows between them.
 const RIM = 6
 const OVERLAP = 3
+const COLLAPSE_S = 0.3
 const FLIGHT_DELAY = 0.38
 const VANISH_LEAD = 0.1
 const FADE_MS = 160
@@ -64,7 +65,9 @@ export async function launchIntoBall(card: HTMLElement, target: Pt, radius = 22)
   glass.setHollow(0)
 
   // Under-damped springs give the collapse and landing their bounce.
-  const size = { w: r.width + RIM * 2, h: r.height + RIM * 2, rad: radius + RIM, vw: 0, vh: 0, vr: 0 }
+  // Width and height collapse together on one eased curve so the pane lands as a true circle;
+  // the bounce is then a uniform scale wobble, which keeps it round.
+  const from = { w: r.width + RIM * 2, h: r.height + RIM * 2, rad: radius + RIM }
   let edge = 1
   let flight = 0
   let flightV = 0
@@ -95,9 +98,14 @@ export async function launchIntoBall(card: HTMLElement, target: Pt, radius = 22)
         const v = velocity + (k * (to - value) - c * velocity) * dt
         return [value + v * dt, v]
       }
-      ;[size.w, size.vw] = spring(size.w, size.vw, BALL_SIZE, 170, 13)
-      ;[size.h, size.vh] = spring(size.h, size.vh, BALL_SIZE, 170, 13)
-      ;[size.rad, size.vr] = spring(size.rad, size.vr, BALL_SIZE / 2, 170, 13)
+      const q = Math.min(1, elapsed / COLLAPSE_S)
+      const ease = 1 - Math.pow(1 - q, 3)
+      const after = Math.max(0, elapsed - COLLAPSE_S)
+      const wobble = q < 1 ? 0 : 0.28 * Math.exp(-after * 7) * Math.sin(after * 22)
+      const scale = 1 + wobble
+      const w = (from.w + (BALL_SIZE - from.w) * ease) * scale
+      const h = (from.h + (BALL_SIZE - from.h) * ease) * scale
+      const rad = Math.min(from.rad + (BALL_SIZE / 2 - from.rad) * ease, Math.min(w, h) / 2)
       edge += (0 - edge) * (1 - Math.exp(-dt * 8))
 
       if (!flying && elapsed > FLIGHT_DELAY) flying = true
@@ -114,7 +122,7 @@ export async function launchIntoBall(card: HTMLElement, target: Pt, radius = 22)
       const sx = 1 + stretch * ux - stretch * 0.5 * uy
       const sy = 1 + stretch * uy - stretch * 0.5 * ux
 
-      glass.setParams({ width: size.w * sx, height: size.h * sy, radius: size.rad * Math.min(sx, sy) })
+      glass.setParams({ width: w * sx, height: h * sy, radius: rad * Math.min(sx, sy) })
       glass.setPresentation({ edgeGlowOnly: edge })
       glass.setTransientMotion({ x: vx, y: vy, amount: Math.min(0.9, speed / 2600) })
       place(pos)

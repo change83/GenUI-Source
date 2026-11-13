@@ -1340,20 +1340,46 @@ p {
 
 
 /* Soft blue light on the ball's upper-right edge while a task runs; outside the shell so it is never clipped. */
+/* Mint core with two pale halo rings, centred on the ball's upper-right rim; only the
+   halos breathe. */
 .pill-spot {
   position: absolute;
-  top: 0;
-  right: 0;
-  width: 16px;
-  height: 16px;
-  background: url('/task-spot.png') center / contain no-repeat;
+  top: -3px;
+  right: -2px;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
   pointer-events: none;
+}
+
+.pill-spot::before,
+.pill-spot::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+}
+
+.pill-spot::before {
+  inset: 0;
+  background: radial-gradient(
+    circle closest-side,
+    rgba(178, 208, 255, 0.62) 0,
+    rgba(178, 208, 255, 0.62) 64%,
+    rgba(205, 218, 255, 0.3) 65%,
+    rgba(205, 218, 255, 0.3) 100%
+  );
   animation: spot-breathe 2.4s ease-in-out infinite;
+}
+
+.pill-spot::after {
+  inset: 8px;
+  background: #39ffd7;
+  box-shadow: 0 0 2px rgba(57, 255, 215, 0.6);
 }
 
 @keyframes spot-breathe {
   50% {
-    opacity: 0.6;
+    opacity: 0.45;
   }
 }
 
