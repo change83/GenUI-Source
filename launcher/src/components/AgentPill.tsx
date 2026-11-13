@@ -63,9 +63,9 @@ function formFor(p: { state: PillState; vw: number; hover: boolean; busy: boolea
       return { glass: { ...BALL, width: s, height: s, radius: 30, ...busy }, inset: 0 }
     }
     case 'typing':
-      return { glass: { ...BALL, width: fit(680), height: 60, radius: 30, glow: 0, liquid: 0 }, inset: 0 }
+      return { glass: { ...BALL, width: fit(400), height: 60, radius: 30, glow: 0, liquid: 0 }, inset: 0 }
     case 'camera':
-      return { glass: { ...BALL, width: fit(412), height: 312, radius: 32, liquid: 0, edge: 1 }, inset: 6 }
+      return { glass: { ...BALL, width: 240, height: 240, radius: 32, liquid: 0, edge: 1 }, inset: 6 }
     case 'confirm':
       return { glass: { ...BALL, width: fit(432), height: 206, radius: 36, liquid: 0, edge: 1 }, inset: 6 }
     case 'caption': {
@@ -232,7 +232,6 @@ export function AgentPill(props: Props) {
           onMouseLeave={() => setHover(false)}
         >
           {state === 'listening' && props.awaitingConfirm && <span className="pill-badge" />}
-          {state === 'listening' && props.busy && !props.awaitingConfirm && <span className="pill-badge is-busy" />}
 
           {state === 'typing' && (
             <form
@@ -272,7 +271,7 @@ export function AgentPill(props: Props) {
             </div>
           )}
         </div>
-
+        {state === 'listening' && props.busy && !props.awaitingConfirm && <span className="pill-spot" aria-hidden />}
       </div>
     </>
   )

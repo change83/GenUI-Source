@@ -167,11 +167,6 @@ p {
     opacity var(--duration-slow) var(--ease-standard);
 }
 
-.stage.is-dimmed {
-  filter: blur(6px) saturate(0.9);
-  transform: scale(0.985);
-  opacity: 0.75;
-}
 
 /* The group sits at the pinned panel's position; the feed is placed inside it by placeFeed() so it always fits on screen. */
 .group {
@@ -1248,72 +1243,63 @@ p {
 
 .task-card.is-launching {
   pointer-events: none;
-  animation: launch-glow 720ms var(--ease-standard) both;
 }
 
 .task-card.is-launching .task-run {
   opacity: 0;
 }
 
-/* Rotating light ring traced around the card while it launches. */
-@property --ring-angle {
-  syntax: '<angle>';
-  initial-value: 0deg;
-  inherits: false;
-}
-
+/* Same soft, hue-shifting inner rim light the agent glass shows around the collaboration card. */
 .task-card.is-launching::before {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  padding: 2px;
-  background: conic-gradient(from var(--ring-angle), #7b5cff, #4a9dff, #5ce1e6, #ff7ab6, #7b5cff);
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(#000 0 0) content-box exclude,
-    linear-gradient(#000 0 0);
-  animation: ring-spin 720ms linear both;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.75),
+    inset 12px 0 20px -10px hsl(270 95% 66% / 0.95),
+    inset -12px 0 20px -10px hsl(185 90% 58% / 0.9),
+    inset 0 12px 20px -10px hsl(25 95% 64% / 0.85),
+    inset 0 -12px 20px -10px hsl(300 90% 68% / 0.95);
+  animation:
+    rim-in 260ms var(--ease-standard) both,
+    rim-hue 1.4s linear infinite;
   pointer-events: none;
+  z-index: 2;
 }
 
-@keyframes ring-spin {
+@keyframes rim-in {
   from {
-    --ring-angle: 0deg;
+    opacity: 0;
   }
+}
+
+@keyframes rim-hue {
   to {
-    --ring-angle: 360deg;
+    filter: hue-rotate(360deg);
   }
 }
 
-@keyframes launch-glow {
-  0% {
-    box-shadow: 0 0 0 0 rgba(108, 92, 255, 0);
-  }
-  50% {
-    box-shadow:
-      0 0 0 3px rgba(123, 92, 255, 0.35),
-      0 0 32px 6px rgba(92, 140, 255, 0.45);
-  }
-  100% {
-    box-shadow:
-      0 0 0 2px rgba(123, 92, 255, 0.3),
-      0 0 24px 4px rgba(92, 140, 255, 0.4);
-  }
-}
-
-/* Orb the card collapses into before it drops into the agent ball. */
+/* Orb the card collapses into: styled after the liquid-glass agent ball (pale glass, top-left
+   highlight, violet-blue core toward the bottom-right, bright rim). */
 .task-orb {
   position: absolute;
-  inset: 0;
+  left: 50%;
+  top: 50%;
+  width: 60px;
+  height: 60px;
+  margin: -30px 0 0 -30px;
+  border-radius: 50%;
   opacity: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.9) 0, transparent 18px),
-    radial-gradient(circle at 50% 50%, #8f7bff 0, #4a86ff 22px, #5ce1e6 40px, transparent 60px);
+    radial-gradient(circle at 30% 26%, rgba(255, 255, 255, 0.95) 0 6%, rgba(255, 255, 255, 0.4) 16%, transparent 34%),
+    radial-gradient(circle at 66% 70%, rgba(70, 80, 255, 0.95) 0, rgba(140, 80, 255, 0.75) 20%, rgba(255, 110, 190, 0.4) 40%, transparent 58%),
+    radial-gradient(circle at 50% 45%, rgba(255, 236, 242, 0.9), rgba(250, 190, 210, 0.85) 70%, rgba(255, 255, 255, 0.9) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.7),
+    inset -4px -6px 12px rgba(120, 70, 255, 0.35),
+    0 6px 16px rgba(90, 20, 60, 0.25);
   z-index: 3;
 }
 
@@ -1387,18 +1373,24 @@ p {
   animation: pulse-amber 1.4s ease-in-out infinite;
 }
 
-.pill-badge.is-busy {
-  top: 4px;
-  right: 4px;
-  width: 12px;
-  height: 12px;
-  background: #2f7bff;
-  animation: pulse-blue 1.6s ease-in-out infinite;
+
+/* Soft blue light on the ball's upper-right edge while a task runs; outside the shell so it is never clipped. */
+.pill-spot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #e6f3ff 0, #6fb4ff 22%, rgba(47, 123, 255, 0.55) 45%, rgba(47, 123, 255, 0) 72%);
+  pointer-events: none;
+  animation: spot-breathe 2s ease-in-out infinite;
 }
 
-@keyframes pulse-blue {
+@keyframes spot-breathe {
   50% {
-    box-shadow: 0 0 0 4px rgba(47, 123, 255, 0.25);
+    transform: scale(1.25);
+    opacity: 0.75;
   }
 }
 

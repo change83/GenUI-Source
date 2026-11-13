@@ -369,7 +369,7 @@ export default function App() {
         </button>
       </nav>
 
-      <main className={`stage ${pill === 'camera' ? 'is-dimmed' : ''}`}>
+      <main className="stage">
         <div
           ref={groupRef}
           className={`group ${moving ? 'is-moving' : ''}`}

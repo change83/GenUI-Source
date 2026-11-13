@@ -42,13 +42,13 @@ export function FeedArea({
     await new Promise((r) => setTimeout(r, 720))
     const r = card.getBoundingClientRect()
     const ball = document.querySelector('.pill-shell')?.getBoundingClientRect()
-    const d = 44
+    const d = 60
     const ix = (r.width - d) / 2
     const iy = (r.height - d) / 2
     const dx = ball ? ball.left + ball.width / 2 - (r.left + r.width / 2) : 0
     const dy = ball ? ball.top + ball.height / 2 - (r.top + r.height / 2) : 200
     const collapse = { duration: 420, easing: 'cubic-bezier(0.65, 0, 0.35, 1)', fill: 'forwards' } as const
-    card.querySelector('.task-orb')?.animate([{ opacity: 0 }, { opacity: 1 }], collapse)
+    card.querySelector('.task-orb')?.animate([{ opacity: 0 }, { opacity: 0, offset: 0.5 }, { opacity: 1 }], collapse)
     await card.animate(
       [{ clipPath: 'inset(0px round 22px)' }, { clipPath: `inset(${iy}px ${ix}px round ${d / 2}px)` }],
       collapse,
