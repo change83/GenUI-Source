@@ -1,4 +1,5 @@
-import { useState, type PointerEvent } from 'react'
+import { useEffect, useState, type PointerEvent } from 'react'
+import { createPortal } from 'react-dom'
 import { widgetLibrary, type Output, type Widget } from '../data'
 import { IconCheck, IconClose, IconEdit, IconPlus } from './Icons'
 import { WidgetBody } from './Widgets'
@@ -13,7 +14,31 @@ interface Props {
 
 export function PinnedArea({ widgets, outputs, onChange, onGrab, dragging }: Props) {
   const [editing, setEditing] = useState(false)
-  const [libraryOpen, setLibraryOpen] = useState(false)
+  const [library, setLibrary] = useState<{ left: number; top: number } | null>(null)
+
+  useEffect(() => {
+    if (!library) return
+    const close = (e: globalThis.PointerEvent) => {
+      if (!(e.target as HTMLElement).closest('.widget-library, .widget-add')) setLibrary(null)
+    }
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && setLibrary(null)
+    window.addEventListener('pointerdown', close)
+    window.addEventListener('keydown', esc)
+    return () => {
+      window.removeEventListener('pointerdown', close)
+      window.removeEventListener('keydown', esc)
+    }
+  }, [library])
+
+  const toggleLibrary = (button: HTMLElement) => {
+    if (library) return setLibrary(null)
+    const r = button.getBoundingClientRect()
+    const width = 220
+    const height = 64 + widgetLibrary.length * 52
+    const left = r.right + 12 + width <= window.innerWidth - 12 ? r.right + 12 : Math.max(12, r.left - 12 - width)
+    const top = Math.max(12, Math.min(window.innerHeight - height - 12, r.top))
+    setLibrary({ left, top })
+  }
   const [dragId, setDragId] = useState<string | null>(null)
 
   const move = (fromId: string, toId: string) => {
@@ -28,7 +53,7 @@ export function PinnedArea({ widgets, outputs, onChange, onGrab, dragging }: Pro
 
   const add = (kind: Widget['kind'], size: Widget['size']) => {
     onChange([...widgets, { id: `w-${kind}-${Date.now()}`, kind, size }])
-    setLibraryOpen(false)
+    setLibrary(null)
   }
 
   return (
@@ -45,7 +70,7 @@ export function PinnedArea({ widgets, outputs, onChange, onGrab, dragging }: Pro
         className="pinned-edit"
         onClick={() => {
           setEditing(!editing)
-          setLibraryOpen(false)
+          setLibrary(null)
         }}
       >
         {editing ? <IconCheck size={13} /> : <IconEdit size={13} />}
@@ -78,7 +103,7 @@ export function PinnedArea({ widgets, outputs, onChange, onGrab, dragging }: Pro
           </div>
         ))}
         {(editing || widgets.length === 0) && (
-          <button className="widget size-small widget-add" onClick={() => setLibraryOpen(!libraryOpen)}>
+          <button className="widget size-small widget-add" onClick={(e) => toggleLibrary(e.currentTarget)}>
             <IconPlus size={22} />
             <span>Add widget</span>
             <small>or pin an agent output here</small>
@@ -86,17 +111,19 @@ export function PinnedArea({ widgets, outputs, onChange, onGrab, dragging }: Pro
         )}
       </div>
 
-      {libraryOpen && (
-        <div className="widget-library">
-          <div className="widget-library-title">Widgets</div>
-          {widgetLibrary.map((item) => (
-            <button key={item.kind} onClick={() => add(item.kind, item.size)}>
-              <strong>{item.name}</strong>
-              <span>{item.desc}</span>
-            </button>
-          ))}
-        </div>
-      )}
+      {library &&
+        createPortal(
+          <div className="widget-library" style={library}>
+            <div className="widget-library-title">Widgets</div>
+            {widgetLibrary.map((item) => (
+              <button key={item.kind} onClick={() => add(item.kind, item.size)}>
+                <strong>{item.name}</strong>
+                <span>{item.desc}</span>
+              </button>
+            ))}
+          </div>,
+          document.body,
+        )}
     </section>
   )
 }

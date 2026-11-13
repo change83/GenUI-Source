@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent } from 'react'
 import { AgentPill, type ConfirmView, type PillState } from './components/AgentPill'
 import { Background } from './components/Background'
 import { FeedArea } from './components/FeedArea'
@@ -13,6 +13,7 @@ import {
 } from './components/Icons'
 import { OutputThumb } from './components/OutputThumb'
 import { PinnedArea } from './components/PinnedArea'
+import { fallbackPlacement, measureFeed, placeFeed, type FeedSizes, type Placement } from './placement'
 import { useTrailingCards } from './useTrailingCards'
 import {
   conversation,
@@ -94,7 +95,10 @@ export default function App() {
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null)
   const [moving, setMoving] = useState(false)
   const groupRef = useRef<HTMLDivElement>(null)
-  useTrailingCards(groupRef, pos, '.feed > .card, .feed-row > .card')
+  const feedRef = useRef<HTMLElement>(null)
+  const [place, setPlace] = useState<Placement>({ x: 0, y: 0, arrangement: 'wide' })
+  const feedPos = useMemo(() => (pos ? { x: pos.x + place.x, y: pos.y + place.y } : null), [pos, place.x, place.y])
+  useTrailingCards(groupRef, feedPos, '.feed > .card, .feed-row > .card')
   useEffect(() => {
     if (muted) window.speechSynthesis?.cancel()
   }, [muted])
@@ -205,19 +209,63 @@ export default function App() {
     }
   }, [])
 
+  // Where the feed would go if the pinned panel were at `p`; `fit` is null when it cannot fully fit on screen.
+  const feedSizes = useRef<FeedSizes | null>(null)
+  const placeAt = useCallback((p: { x: number; y: number }) => {
+    const pinned = groupRef.current?.firstElementChild as HTMLElement | null
+    if (!pinned || !feedRef.current) return null
+    const rect = { x: p.x, y: p.y, w: pinned.offsetWidth, h: pinned.offsetHeight }
+    const sizes = (feedSizes.current ??= measureFeed(feedRef.current))
+    return {
+      fit: placeFeed(rect, sizes, GROUP_GAP, window.innerWidth, window.innerHeight),
+      fallback: () => fallbackPlacement(rect, sizes, GROUP_GAP, window.innerWidth, window.innerHeight),
+    }
+  }, [])
+
+  // Moves the panel and re-places the feed in the same update, so the feed never leaves the screen.
+  const posRef = useRef(pos)
+  const moveTo = useCallback(
+    (p: { x: number; y: number }) => {
+      posRef.current = p
+      setPos(p)
+      const at = placeAt(p)
+      if (!at) return
+      const next = at.fit ?? at.fallback()
+      setPlace((prev) =>
+        prev.x === next.x && prev.y === next.y && prev.arrangement === next.arrangement ? prev : next,
+      )
+    },
+    [placeAt],
+  )
+
   useLayoutEffect(() => {
-    const g = groupRef.current
-    if (!g || pos) return
-    const x = (window.innerWidth - g.offsetWidth) / 2
-    const y = (window.innerHeight - g.offsetHeight) / 2 - 40
-    setPos(clamp({ x, y }))
-  }, [pos, clamp])
+    const pinned = groupRef.current?.firstElementChild as HTMLElement | null
+    if (!pinned || !feedRef.current || pos) return
+    const feed = measureFeed(feedRef.current).wide
+    const x = (window.innerWidth - (pinned.offsetWidth + GROUP_GAP + feed.w)) / 2
+    const y = (window.innerHeight - Math.max(pinned.offsetHeight, feed.h)) / 2 - 40
+    moveTo(clamp({ x, y }))
+  }, [pos, clamp, moveTo])
+
+  // New outputs, edit mode or added widgets change either side's size; re-place when that happens.
+  useEffect(() => {
+    const pinned = groupRef.current?.firstElementChild
+    const feed = feedRef.current
+    if (!pinned || !feed) return
+    const ro = new ResizeObserver(() => {
+      feedSizes.current = null
+      if (posRef.current) moveTo(clamp(posRef.current))
+    })
+    ro.observe(pinned)
+    ro.observe(feed)
+    return () => ro.disconnect()
+  }, [moveTo, clamp])
 
   useEffect(() => {
-    const onResize = () => setPos((p) => (p ? clamp(p) : p))
+    const onResize = () => posRef.current && moveTo(clamp(posRef.current))
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
-  }, [clamp])
+  }, [clamp, moveTo])
 
   const grab = (e: PointerEvent<HTMLElement>) => {
     if (e.button !== 0 || !pos) return
@@ -233,7 +281,12 @@ export default function App() {
         setMoving(true)
       }
       ev.preventDefault()
-      setPos(clamp({ x: origin.x + dx, y: origin.y + dy }))
+      // Only move to spots where the feed still fits; otherwise slide along whichever axis allows it.
+      const want = clamp({ x: origin.x + dx, y: origin.y + dy })
+      const cur = posRef.current ?? origin
+      const options = [want, { x: want.x, y: cur.y }, { x: cur.x, y: want.y }]
+      const next = options.find((p) => placeAt(p)?.fit)
+      if (next) moveTo(next)
     }
     const up = () => {
       window.removeEventListener('pointermove', move)
@@ -316,10 +369,14 @@ export default function App() {
         <div
           ref={groupRef}
           className={`group ${moving ? 'is-moving' : ''}`}
-          style={{ left: pos?.x ?? 0, top: pos?.y ?? 0, gap: GROUP_GAP, visibility: pos ? 'visible' : 'hidden' }}
+          style={{ left: pos?.x ?? 0, top: pos?.y ?? 0, visibility: pos ? 'visible' : 'hidden' }}
         >
           <PinnedArea widgets={widgets} outputs={outputs} onChange={setWidgets} onGrab={grab} dragging={moving} />
           <FeedArea
+            ref={feedRef}
+            arrangement={place.arrangement}
+            style={{ left: place.x, top: place.y }}
+            onOutputSettled={(id) => setOutputs((list) => list.map((o) => (o.id === id ? { ...o, fresh: false } : o)))}
             outputs={outputs}
             pinnedOutputIds={pinnedOutputIds}
             conversation={conversation}

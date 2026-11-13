@@ -1,8 +1,13 @@
+import type { CSSProperties, Ref } from 'react'
 import type { Conversation, Output, RecommendedTask } from '../data'
+import type { Arrangement } from '../placement'
 import { IconArrowUpRight, IconChat, IconCheck, IconPin, IconSparkle } from './Icons'
 import { OutputThumb } from './OutputThumb'
 
 interface Props {
+  ref?: Ref<HTMLElement>
+  arrangement: Arrangement
+  style?: CSSProperties
   outputs: Output[]
   pinnedOutputIds: Set<string>
   conversation: Conversation
@@ -12,9 +17,13 @@ interface Props {
   onPinOutput: (o: Output) => void
   onRunTask: (t: RecommendedTask) => void
   onFollowUp: (q: string) => void
+  onOutputSettled: (id: string) => void
 }
 
 export function FeedArea({
+  ref,
+  arrangement,
+  style,
   outputs,
   pinnedOutputIds,
   conversation,
@@ -24,9 +33,10 @@ export function FeedArea({
   onPinOutput,
   onRunTask,
   onFollowUp,
+  onOutputSettled,
 }: Props) {
   return (
-    <section className="feed" aria-label="Agent feed">
+    <section ref={ref} className={`feed ${arrangement === 'wide' ? '' : `is-${arrangement}`}`} style={style} aria-label="Agent feed">
       <div className="feed-row">
         {outputs.map((o) => {
           const pinned = pinnedOutputIds.has(o.id)
@@ -35,6 +45,7 @@ export function FeedArea({
               key={o.id}
               className={`card output-card kind-${o.kind} ${o.fresh ? 'is-fresh' : ''}`}
               onClick={() => onOpenOutput(o)}
+              onAnimationEnd={(e) => o.fresh && e.target === e.currentTarget && onOutputSettled(o.id)}
             >
               <div className="output-art">
                 <OutputThumb kind={o.kind} />

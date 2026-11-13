@@ -173,11 +173,9 @@ p {
   opacity: 0.75;
 }
 
-/* The dynamic area is a flex sibling of the pinned panel: top-aligned, fixed gap, moves with it. */
+/* The group sits at the pinned panel's position; the feed is placed inside it by placeFeed() so it always fits on screen. */
 .group {
   position: absolute;
-  display: flex;
-  align-items: flex-start;
 }
 
 .group.is-moving {
@@ -194,6 +192,7 @@ p {
 
 .pinned {
   position: relative;
+  user-select: none;
   padding: 20px;
   border-radius: 42px;
 }
@@ -331,10 +330,9 @@ p {
   max-width: 130px;
 }
 
+/* Portaled to <body> so it sits above every desktop layer, including the agent ball canvas. */
 .widget-library {
-  position: absolute;
-  left: calc(100% + 12px);
-  bottom: 0;
+  position: fixed;
   width: 220px;
   padding: 10px;
   border-radius: var(--radius-lg);
@@ -342,7 +340,7 @@ p {
   -webkit-backdrop-filter: blur(80px);
   backdrop-filter: blur(80px);
   box-shadow: var(--elevation-5);
-  z-index: var(--z-raised);
+  z-index: var(--z-toast);
   animation: pop-in 260ms var(--ease-spring) both;
 }
 
@@ -889,10 +887,61 @@ p {
 /* ---------- Feed ---------- */
 
 .feed {
+  position: absolute;
   width: 530px;
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+.feed.is-measuring {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.feed.is-measuring * {
+  animation: none !important;
+}
+
+/* Compact arrangement: one 300px column, outputs two per row above the conversation. */
+.feed.is-compact {
+  width: 300px;
+}
+
+.feed.is-compact .feed-row {
+  flex-wrap: wrap;
+  height: auto;
+}
+
+.feed.is-compact .feed-row > .output-card {
+  width: 140px;
+  height: 163px;
+}
+
+.feed.is-compact .feed-row > .output-card.is-fresh {
+  animation: pop-in 520ms var(--ease-spring) both;
+}
+
+.feed.is-compact .feed-row > .convo-card {
+  width: 300px;
+  height: 244px;
+}
+
+/* Strip arrangement: one short row (outputs, conversation, then tasks stacked in a column). */
+.feed.is-strip {
+  width: max-content;
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: auto auto;
+  align-items: start;
+}
+
+.feed.is-strip .feed-row {
+  grid-row: 1 / span 2;
+}
+
+.feed.is-strip > .task-card {
+  width: 280px;
 }
 
 .feed-row {
