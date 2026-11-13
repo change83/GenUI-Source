@@ -1,4 +1,4 @@
-import type { CSSProperties, Ref } from 'react'
+import { useState, type CSSProperties, type Ref } from 'react'
 import type { Conversation, Output, RecommendedTask } from '../data'
 import type { Arrangement } from '../placement'
 import { IconArrowUpRight, IconChat, IconCheck, IconPin, IconSparkle } from './Icons'
@@ -12,7 +12,6 @@ interface Props {
   pinnedOutputIds: Set<string>
   conversation: Conversation
   tasks: RecommendedTask[]
-  runningTaskId: string | null
   onOpenOutput: (o: Output) => void
   onPinOutput: (o: Output) => void
   onRunTask: (t: RecommendedTask) => void
@@ -28,13 +27,42 @@ export function FeedArea({
   pinnedOutputIds,
   conversation,
   tasks,
-  runningTaskId,
   onOpenOutput,
   onPinOutput,
   onRunTask,
   onFollowUp,
   onOutputSettled,
 }: Props) {
+  const [launching, setLaunching] = useState<Set<string>>(new Set())
+
+  // Glow ring, then the card collapses into an orb that drops into the agent ball; the task then runs in the background.
+  const launch = async (t: RecommendedTask, card: HTMLElement) => {
+    if (launching.has(t.id)) return
+    setLaunching((s) => new Set(s).add(t.id))
+    await new Promise((r) => setTimeout(r, 720))
+    const r = card.getBoundingClientRect()
+    const ball = document.querySelector('.pill-shell')?.getBoundingClientRect()
+    const d = 44
+    const ix = (r.width - d) / 2
+    const iy = (r.height - d) / 2
+    const dx = ball ? ball.left + ball.width / 2 - (r.left + r.width / 2) : 0
+    const dy = ball ? ball.top + ball.height / 2 - (r.top + r.height / 2) : 200
+    const collapse = { duration: 420, easing: 'cubic-bezier(0.65, 0, 0.35, 1)', fill: 'forwards' } as const
+    card.querySelector('.task-orb')?.animate([{ opacity: 0 }, { opacity: 1 }], collapse)
+    await card.animate(
+      [{ clipPath: 'inset(0px round 22px)' }, { clipPath: `inset(${iy}px ${ix}px round ${d / 2}px)` }],
+      collapse,
+    ).finished
+    await card.animate(
+      [
+        { transform: 'none', opacity: 1 },
+        { transform: `translate(${dx}px, ${dy}px) scale(0.4)`, opacity: 0 },
+      ],
+      { duration: 560, easing: 'cubic-bezier(0.55, 0, 0.75, 0.4)', fill: 'forwards', composite: 'add' },
+    ).finished
+    onRunTask(t)
+  }
+
   return (
     <section ref={ref} className={`feed ${arrangement === 'wide' ? '' : `is-${arrangement}`}`} style={style} aria-label="Agent feed">
       <div className="feed-row">
@@ -91,24 +119,23 @@ export function FeedArea({
         </article>
       </div>
 
-      {tasks.map((t) => {
-        const running = runningTaskId === t.id
-        return (
-          <article
-            key={t.id}
-            className={`card task-card ${running ? 'is-running' : ''}`}
-            onClick={() => !running && onRunTask(t)}
-          >
-            <IconSparkle size={16} className="task-icon" />
-            <div className="task-body">
-              <p>{t.title}</p>
-              <span>{t.deliverable}</span>
-            </div>
-            <span className="task-cta">{running ? 'Running…' : 'Run with agent'}</span>
-            <span className="card-tag is-floating">Suggested</span>
-          </article>
-        )
-      })}
+      {tasks.map((t) => (
+        <article
+          key={t.id}
+          className={`card task-card ${launching.has(t.id) ? 'is-launching' : ''}`}
+          onClick={(e) => launch(t, e.currentTarget)}
+        >
+          <IconSparkle size={16} className="task-icon" />
+          <div className="task-body">
+            <p>{t.title}</p>
+            <span>{t.deliverable}</span>
+          </div>
+          <button type="button" className="task-run">
+            Run
+          </button>
+          <span className="task-orb" aria-hidden />
+        </article>
+      ))}
     </section>
   )
 }

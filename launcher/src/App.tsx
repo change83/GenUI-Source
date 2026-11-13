@@ -95,6 +95,7 @@ export default function App() {
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null)
   const [moving, setMoving] = useState(false)
   const groupRef = useRef<HTMLDivElement>(null)
+  const [tasks, setTasks] = useState(recommendedTasks)
   const feedRef = useRef<HTMLElement>(null)
   const [place, setPlace] = useState<Placement>({ x: 0, y: 0, arrangement: 'wide' })
   const feedPos = useMemo(() => (pos ? { x: pos.x + place.x, y: pos.y + place.y } : null), [pos, place.x, place.y])
@@ -310,7 +311,10 @@ export default function App() {
     else setWidgets((ws) => [...ws, { id: `w-out-${o.id}`, kind: 'output', size: 'small', outputId: o.id }])
   }
 
-  const runTask = (t: RecommendedTask) => startJob(t.title, t.outputKind, { taskId: t.id })
+  const runTask = (t: RecommendedTask) => {
+    setTasks((list) => list.filter((x) => x.id !== t.id))
+    startJob(t.title, t.outputKind, { taskId: t.id })
+  }
 
   const demo: { state: PillState; label: string; run: () => void }[] = [
     {
@@ -380,8 +384,7 @@ export default function App() {
             outputs={outputs}
             pinnedOutputIds={pinnedOutputIds}
             conversation={conversation}
-            tasks={recommendedTasks}
-            runningTaskId={job?.taskId ?? null}
+            tasks={tasks}
             onOpenOutput={openOutput}
             onPinOutput={togglePin}
             onRunTask={runTask}

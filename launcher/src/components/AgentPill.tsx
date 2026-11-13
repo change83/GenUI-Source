@@ -232,6 +232,7 @@ export function AgentPill(props: Props) {
           onMouseLeave={() => setHover(false)}
         >
           {state === 'listening' && props.awaitingConfirm && <span className="pill-badge" />}
+          {state === 'listening' && props.busy && !props.awaitingConfirm && <span className="pill-badge is-busy" />}
 
           {state === 'typing' && (
             <form

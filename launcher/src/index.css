@@ -886,9 +886,10 @@ p {
 
 /* ---------- Feed ---------- */
 
+/* Sized to its content so a growing output row changes the measured size and triggers re-placement. */
 .feed {
   position: absolute;
-  width: 530px;
+  width: max-content;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -904,7 +905,15 @@ p {
 }
 
 /* Compact arrangement: one 300px column, outputs two per row above the conversation. */
+.feed > .task-card {
+  width: 530px;
+}
+
 .feed.is-compact {
+  width: 300px;
+}
+
+.feed.is-compact > .task-card {
   width: 300px;
 }
 
@@ -992,8 +1001,7 @@ p {
   transition: all var(--duration-base) var(--ease-standard);
 }
 
-.card:hover .card-tag.is-floating,
-.task-card.is-running .card-tag.is-floating {
+.card:hover .card-tag.is-floating {
   opacity: 1;
   transform: none;
 }
@@ -1217,30 +1225,98 @@ p {
   color: var(--color-on-surface-variant);
 }
 
-.task-cta {
+.task-run {
   align-self: flex-end;
-  font-size: 10px;
+  flex: none;
+  padding: 6px 16px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 14px;
   font-weight: 500;
-  color: var(--color-primary);
   opacity: 0;
-  transform: translateX(-4px);
-  transition: all var(--duration-base) var(--ease-standard);
+  transform: scale(0.9);
+  transition:
+    opacity var(--duration-base) var(--ease-standard),
+    transform var(--duration-base) var(--ease-spring);
 }
 
-.task-card:hover .task-cta,
-.task-card.is-running .task-cta {
+.task-card:hover .task-run {
   opacity: 1;
   transform: none;
 }
 
-.task-card.is-running {
-  cursor: default;
+.task-card.is-launching {
+  pointer-events: none;
+  animation: launch-glow 720ms var(--ease-standard) both;
 }
 
-.task-card .card-tag.is-floating {
-  top: 10px;
-  color: var(--color-primary);
+.task-card.is-launching .task-run {
+  opacity: 0;
 }
+
+/* Rotating light ring traced around the card while it launches. */
+@property --ring-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.task-card.is-launching::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(from var(--ring-angle), #7b5cff, #4a9dff, #5ce1e6, #ff7ab6, #7b5cff);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  animation: ring-spin 720ms linear both;
+  pointer-events: none;
+}
+
+@keyframes ring-spin {
+  from {
+    --ring-angle: 0deg;
+  }
+  to {
+    --ring-angle: 360deg;
+  }
+}
+
+@keyframes launch-glow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(108, 92, 255, 0);
+  }
+  50% {
+    box-shadow:
+      0 0 0 3px rgba(123, 92, 255, 0.35),
+      0 0 32px 6px rgba(92, 140, 255, 0.45);
+  }
+  100% {
+    box-shadow:
+      0 0 0 2px rgba(123, 92, 255, 0.3),
+      0 0 24px 4px rgba(92, 140, 255, 0.4);
+  }
+}
+
+/* Orb the card collapses into before it drops into the agent ball. */
+.task-orb {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.9) 0, transparent 18px),
+    radial-gradient(circle at 50% 50%, #8f7bff 0, #4a86ff 22px, #5ce1e6 40px, transparent 60px);
+  z-index: 3;
+}
+
 
 .output-card .thumb-doc {
   width: 50%;
@@ -1252,23 +1328,6 @@ p {
   transform: translateY(26%);
 }
 
-.task-card.is-running::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(100deg, transparent 30%, rgba(108, 67, 198, 0.12) 50%, transparent 70%);
-  background-size: 200% 100%;
-  animation: shimmer 1.6s linear infinite;
-}
-
-@keyframes shimmer {
-  from {
-    background-position: 200% 0;
-  }
-  to {
-    background-position: -200% 0;
-  }
-}
 
 /* ---------- Agent pill ---------- */
 
@@ -1326,6 +1385,21 @@ p {
   border: 2px solid #fff;
   z-index: 2;
   animation: pulse-amber 1.4s ease-in-out infinite;
+}
+
+.pill-badge.is-busy {
+  top: 4px;
+  right: 4px;
+  width: 12px;
+  height: 12px;
+  background: #2f7bff;
+  animation: pulse-blue 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse-blue {
+  50% {
+    box-shadow: 0 0 0 4px rgba(47, 123, 255, 0.25);
+  }
 }
 
 @keyframes pulse-amber {
