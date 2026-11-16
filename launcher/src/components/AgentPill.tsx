@@ -194,16 +194,41 @@ export function AgentPill(props: Props) {
     glassRef.current?.setTarget(form.glass)
   }, [form])
 
-  // A live microphone drives the ball's motion while it listens, like the original agent ball.
+  // Live mic RMS → deformation amplitude + specular travel speed on the listening ball.
+  // Silent / mic-off leave the ambient liquid-glass motion untouched.
   useEffect(() => {
     if (state !== 'listening' || !props.micOn) return
-    const bridge = new AudioMotionBridge(glassRef.current?.renderer ?? null)
+    const renderer = glassRef.current?.renderer ?? null
+    if (!renderer) return
+    const bridge = new AudioMotionBridge(renderer)
     bridge.setStrength(100)
+
+    const params = new URLSearchParams(window.location.search)
+    const sim = params.get('micSim')
+    // ?micSim=0.8 (or bare ?micSim) drives the bridge without a real mic — for demos / headless.
+    if (sim !== null) {
+      const level = Math.max(0, Math.min(1, sim === '' ? 0.75 : Number(sim) || 0))
+      let raf = 0
+      const pulse = (now: number) => {
+        const wobble = 0.12 * Math.sin(now / 280)
+        bridge.setInput({ level: Math.max(0, Math.min(1, level + wobble)) }, true)
+        raf = requestAnimationFrame(pulse)
+      }
+      raf = requestAnimationFrame(pulse)
+      return () => {
+        cancelAnimationFrame(raf)
+        bridge.reset()
+        bridge.dispose()
+      }
+    }
+
+    // Levels only arrive while the analyser is running; silence maps to ambient 1x in the bridge.
     const audio = new AudioReactive((l) => bridge.setInput(l, true))
     audio.setSensitivity(153)
-    audio.startMicrophone()
+    void audio.startMicrophone()
     return () => {
       audio.dispose()
+      bridge.reset()
       bridge.dispose()
     }
   }, [state, props.micOn])

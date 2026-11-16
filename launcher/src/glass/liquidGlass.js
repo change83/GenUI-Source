@@ -778,8 +778,10 @@ class AudioMotionBridge {
     };
     const targetEnergy = this.active ? this.input : 0;
     this.energy = approach(this.energy, targetEnergy, targetEnergy > this.energy ? 0.2 : 0.55, 2.4);
-    const speed = this.active ? 1 + this.strength * (0.65 + 1.2 * this.energy - 1) : 1;
-    const amplitude = this.active ? 1 + this.strength * (0.55 + 0.95 * this.energy - 1) : 1;
+    // Silence (and mic-off) keep ambient 1x motion. Louder input only lifts speed
+    // (specular light travel) and amplitude (spherical deformation + light path size).
+    const speed = 1 + this.strength * this.energy;
+    const amplitude = 1 + this.strength * 0.6 * this.energy;
     this.speedMultiplier = approach(this.speedMultiplier, speed, 0.12, 1.5);
     this.amplitudeMultiplier = approach(this.amplitudeMultiplier, amplitude, 0.12, 1.2);
     this.publish();
