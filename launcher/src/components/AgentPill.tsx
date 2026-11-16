@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { BALL, GlassPill, type GlassTarget } from '../glass/GlassPill'
 import { AudioMotionBridge, AudioReactive } from '../glass/liquidGlass.js'
+import { dockPoint, type Referent } from '../reference'
 import { IconCheck } from './Icons'
 
 export type PillState = 'listening' | 'typing' | 'camera' | 'confirm' | 'caption'
@@ -26,6 +27,8 @@ interface Props {
   onConfirm: (selected: string[]) => void
   caption: string
   onCaptionClick: () => void
+  /** The card the user just mentioned; the pill flies over and docks on it. */
+  referent: Referent | null
 }
 
 const BOTTOM = 40
@@ -193,6 +196,11 @@ export function AgentPill(props: Props) {
   useEffect(() => {
     glassRef.current?.setTarget(form.glass)
   }, [form])
+
+  const { referent } = props
+  useEffect(() => {
+    glassRef.current?.setAnchor(referent ? (size) => dockPoint(referent, size) : null)
+  }, [referent])
 
   // Live mic RMS → deformation amplitude + specular travel speed on the listening ball.
   // Silent / mic-off leave the ambient liquid-glass motion untouched.

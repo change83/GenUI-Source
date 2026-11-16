@@ -30,6 +30,16 @@ export type GlassTarget = Partial<Omit<GlassParams, 'glowBlend' | 'deformationMo
 type NumKey = Exclude<keyof GlassParams, 'glowBlend' | 'deformationMode'>
 const SPRING_KEYS: NumKey[] = ['width', 'height', 'radius', 'glow', 'liquid', 'hue1', 'hue2', 'hue3', 'glowMix']
 
+type Pt = { x: number; y: number }
+/** Where the pane's centre should be, in viewport pixels, for a pane of the given size; null = home. */
+export type GlassAnchor = (size: { width: number; height: number }) => Pt | null
+
+// Travel springs, just short of critical damping so the pane lands with a slight give. The
+// horizontal one is stiffer, so a diagonal trip leads sideways and curves in, like the launch
+// ball's arc.
+const TRAVEL_X = { k: 90, c: 16 }
+const TRAVEL_Y = { k: 64, c: 13.6 }
+
 interface Options {
   canvas: HTMLCanvasElement
   shell: HTMLElement
@@ -76,6 +86,11 @@ export class GlassPill {
   private error = 0
   private motion = 0
   private content = 1
+  private anchor: GlassAnchor | null = null
+  private offset: Pt = { x: 0, y: 0 }
+  private drift: Pt = { x: 0, y: 0 }
+  private traveling = false
+  private stretched = false
   private raf: number | null = null
   private last: number | null = null
   private disposed = false
@@ -122,6 +137,17 @@ export class GlassPill {
     this.edgeTo = edgeTo
     this.elapsed = 0
     this.morphing = true
+    this.schedule()
+  }
+
+  /**
+   * Sends the pane to wherever `anchor` says and keeps it there, following the spot if it moves;
+   * null brings it back home (bottom centre).
+   */
+  setAnchor(anchor: GlassAnchor | null) {
+    if (this.disposed || anchor === this.anchor) return
+    this.anchor = anchor
+    this.traveling = true
     this.schedule()
   }
 
@@ -191,9 +217,43 @@ export class GlassPill {
     if (Math.abs(this.content - settled) < 0.001) this.content = settled
     const contentMoving = this.content !== before && this.content !== settled
 
+    if (this.traveling) this.travel(dt)
+
     this.layout()
-    if (this.morphing || contentMoving || this.content < 1) this.schedule()
+    if (this.morphing || contentMoving || this.content < 1 || this.traveling) this.schedule()
     else this.last = null
+  }
+
+  private homeY(height: number) {
+    return window.innerHeight - this.bottom - height / 2
+  }
+
+  private travel(dt: number) {
+    const size = { width: this.to.width, height: this.to.height }
+    const want = this.anchor?.(size) ?? null
+    const tx = want ? want.x - window.innerWidth / 2 : 0
+    const ty = want ? want.y - this.homeY(size.height) : 0
+    const steps = Math.max(1, Math.ceil(dt / 0.006))
+    const step = dt / steps
+    for (let i = 0; i < steps; i++) {
+      this.drift.x += (TRAVEL_X.k * (tx - this.offset.x) - TRAVEL_X.c * this.drift.x) * step
+      this.drift.y += (TRAVEL_Y.k * (ty - this.offset.y) - TRAVEL_Y.c * this.drift.y) * step
+      this.offset.x += this.drift.x * step
+      this.offset.y += this.drift.y * step
+    }
+    const speed = Math.hypot(this.drift.x, this.drift.y)
+    const settled = Math.hypot(tx - this.offset.x, ty - this.offset.y) < 0.3 && speed < 2
+    if (settled) {
+      this.offset = { x: tx, y: ty }
+      this.drift = { x: 0, y: 0 }
+      // Docked panes keep ticking so they follow a card that is dragged or reflowed.
+      if (!want) this.traveling = false
+    }
+    // Only the ball stretches along its path; wider panes carry DOM content that cannot deform.
+    const elastic = Math.max(0, Math.min(1, (160 - this.current.width) / 100))
+    const amount = settled ? 0 : Math.min(0.35, speed / 4000) * elastic
+    if (amount > 0 || this.stretched) this.renderer?.setTransientMotion({ x: this.drift.x, y: this.drift.y, amount })
+    this.stretched = amount > 0
   }
 
   private applyContent() {
@@ -207,9 +267,10 @@ export class GlassPill {
     this.shell.style.height = `${height}px`
     this.shell.style.borderRadius = `${r}px`
     this.applyContent()
+    const { x, y } = this.offset
+    this.wrap.style.transform = x === 0 && y === 0 ? '' : `translate(calc(-50% + ${x.toFixed(2)}px), ${y.toFixed(2)}px)`
     if (this.renderer) {
-      const vh = window.innerHeight
-      this.renderer.setPosition({ x: 0.5, y: (vh - this.bottom - height / 2) / vh })
+      this.renderer.setPosition({ x: 0.5 + x / window.innerWidth, y: (this.homeY(height) + y) / window.innerHeight })
     }
   }
 

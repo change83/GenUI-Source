@@ -22,3 +22,13 @@ npm run dev
 | Caption | With the speaker off (top-right), agent replies appear as a one-line caption |
 
 The **Agent states** panel (bottom left) jumps to any state for demos.
+
+## Referring
+
+Say or type a word that is on screen and the agent pill flies to the card or widget that shows it, docking on the edge nearest that word, while rings ripple outward from the card. Typing `competitor` (or the misspelt `conpetior`) sends it to the "Competitor Analysis for Wearable Products" card.
+
+- **Typed**: matched as you type in the text field; the field itself moves and sits just outside the card. Clearing the word, submitting or pressing Esc sends it home.
+- **Spoken**: while listening with the mic on (click **Listening**), using the browser's speech recognition; the ball stays for 5s after the last mention. Recognition is English by default; add `?lang=zh-CN` for another language.
+- **Without a microphone**: `?say=competitor` plays that phrase as if it had been heard, once you click **Listening**. Chrome's speech recognition needs to reach Google's service, so use this (or typing) where that is blocked.
+
+Matching (`src/reference.ts`) reads the text of the feed cards and pinned widgets, tolerates plurals, word prefixes while typing and small misspellings, and lets the latest on-screen word decide.

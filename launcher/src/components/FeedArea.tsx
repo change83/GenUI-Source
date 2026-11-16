@@ -85,6 +85,7 @@ export function FeedArea({
             <article
               key={o.id}
               data-flip={o.id}
+              data-ref={o.kind === 'poster' ? o.title : undefined}
               className={`card output-card kind-${o.kind} ${o.fresh ? 'is-fresh' : ''}`}
               onClick={() => onOpenOutput(o)}
               onAnimationEnd={(e) => o.fresh && e.target === e.currentTarget && onOutputSettled(o.id)}

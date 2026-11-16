@@ -13,8 +13,11 @@ import {
 } from './components/Icons'
 import { OutputThumb } from './components/OutputThumb'
 import { PinnedArea } from './components/PinnedArea'
+import { ReferenceRipple } from './components/ReferenceRipple'
 import { TaskDrawer, type DrawerTask } from './components/TaskDrawer'
 import { fallbackPlacement, measureFeed, placeFeed, type FeedSizes, type Placement } from './placement'
+import { findReferent, sameReferent, type Referent } from './reference'
+import { listenForSpeech } from './speech'
 import { useTrailingCards } from './useTrailingCards'
 import {
   archivedOutputs,
@@ -44,6 +47,9 @@ type Mode = 'auto' | 'typing' | 'camera'
 const STEPS = ['Understanding your request', 'Searching sources', 'Analyzing findings', 'Drafting the deliverable', 'Polishing the result']
 const CONFIRM_AT = 42
 const GROUP_GAP = 60
+// Typing settles for a moment before the pill moves; a spoken reference is held this long.
+const TYPED_SETTLE_MS = 200
+const SPOKEN_HOLD_MS = 5000
 
 function confirmFor(kind: OutputKind, title: string): ConfirmView | null {
   if (kind === 'report')
@@ -136,6 +142,45 @@ export default function App() {
     const t = setTimeout(() => setFlash(null), 5000)
     return () => clearTimeout(t)
   }, [flash])
+
+  // Referring: when the user types or says words that are on screen, the pill flies to the card
+  // that shows them and the card ripples. A reference belongs to the pill form it was made in,
+  // so leaving the listening or typing form sends the pill home.
+  const [reference, setReference] = useState<{ to: Referent; from: PillState } | null>(null)
+  const referent = reference?.from === pill ? reference.to : null
+  const refer = useCallback(
+    (to: Referent | null, from: PillState) =>
+      setReference((prev) => (to ? (prev?.from === from && sameReferent(prev.to, to) ? prev : { to, from }) : null)),
+    [],
+  )
+
+  useEffect(() => {
+    if (pill !== 'typing') return
+    const t = setTimeout(() => refer(findReferent(input, true), 'typing'), TYPED_SETTLE_MS)
+    return () => clearTimeout(t)
+  }, [pill, input, refer])
+
+  useEffect(() => {
+    if (pill !== 'listening' || !micOn) return
+    let hold = 0
+    const heard = (text: string) => {
+      const next = findReferent(text)
+      if (!next) return
+      refer(next, 'listening')
+      clearTimeout(hold)
+      hold = window.setTimeout(() => refer(null, 'listening'), SPOKEN_HOLD_MS)
+    }
+    const params = new URLSearchParams(window.location.search)
+    const stop = listenForSpeech(heard, params.get('lang') ?? 'en-US')
+    // ?say=competitor stands in for a spoken phrase where there is no microphone or recognition service.
+    const said = params.get('say')
+    const sim = said ? window.setTimeout(() => heard(said), 800) : 0
+    return () => {
+      stop()
+      clearTimeout(hold)
+      clearTimeout(sim)
+    }
+  }, [pill, micOn, refer])
 
   const startJob = useCallback(
     (title: string, kind: OutputKind, opts: { taskId?: string; ask?: boolean; progress?: number } = {}) => {
@@ -409,6 +454,8 @@ export default function App() {
         </div>
       </main>
 
+      <ReferenceRipple target={referent?.el ?? null} onLost={() => setReference(null)} />
+
       {pill === 'camera' && <div className="dismiss-layer" onClick={() => setMode('auto')} aria-hidden />}
 
       <AgentPill
@@ -438,6 +485,7 @@ export default function App() {
           if (o) openOutput(o)
           setFlash(null)
         }}
+        referent={referent}
       />
 
       <TaskDrawer tasks={drawerTasks} />
