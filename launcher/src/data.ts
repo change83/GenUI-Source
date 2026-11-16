@@ -85,6 +85,26 @@ export const recommendedTasks: RecommendedTask[] = [
   },
 ]
 
+export interface Contact {
+  id: string
+  name: string
+  /** Lowercase words the user may call them by, in English or Chinese. */
+  aliases: string[]
+  avatar?: string
+  /** Stand-in for their camera once the call connects. */
+  video?: string
+}
+
+export const contacts: Contact[] = [
+  {
+    id: 'mom',
+    name: 'Mom',
+    aliases: ['mom', 'mum', 'mommy', 'mother', 'mama', 'my mom', 'my mother', '妈妈', '妈', '老妈', '母亲', '我妈', '我妈妈'],
+    avatar: '/call-mom-avatar.jpg',
+    video: '/call-mom.jpg',
+  },
+]
+
 /** Background work the agent already has going, shown in the edge task drawer. */
 export const backgroundTasks: { id: string; title: string; subtitle: string; kind: OutputKind; progress: number }[] = [
   {

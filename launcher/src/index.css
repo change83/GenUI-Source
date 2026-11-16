@@ -1879,6 +1879,210 @@ p {
   animation: fade-up 260ms var(--ease-out) both;
 }
 
+/* calling: the pill as a dialling card; content box 348×212 */
+
+.pill-calling {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 40px;
+}
+
+.calling-title {
+  position: absolute;
+  left: 24px;
+  top: 18px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.calling-who {
+  position: relative;
+  width: 76px;
+  height: 76px;
+}
+
+.calling-who .call-avatar {
+  position: relative;
+  width: 76px;
+  height: 76px;
+}
+
+/* Two rings breathing out of the avatar while it rings. */
+.calling-ring,
+.calling-ring i {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+}
+
+.calling-ring i {
+  border: 1.5px solid rgba(108, 67, 198, 0.45);
+  animation: calling-ring 1.8s cubic-bezier(0.2, 0.6, 0.3, 1) infinite;
+}
+
+.calling-ring i:nth-child(2) {
+  animation-delay: 0.9s;
+}
+
+@keyframes calling-ring {
+  from {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(1.7);
+    opacity: 0;
+  }
+}
+
+.calling-name {
+  margin: 6px 0 12px;
+  font-size: 14px;
+  color: var(--color-on-surface-muted);
+}
+
+/* ---------- Phone call ---------- */
+
+.call-avatar {
+  display: block;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.call-avatar.is-initials {
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(140deg, #9b7bff, #6c43c6);
+}
+
+.call-hangup {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #f0323c;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(240, 50, 60, 0.35);
+  transition:
+    transform var(--duration-base) var(--ease-spring),
+    background var(--duration-base);
+}
+
+.call-hangup:hover {
+  background: #d9232d;
+  transform: scale(1.06);
+}
+
+/* The connected call, floating at the desktop's top-left. Under the agent glass canvas so the
+   ball is drawn over it while the two split apart. */
+.call-window {
+  position: fixed;
+  width: 340px;
+  padding: 6px;
+  border-radius: 28px;
+  overflow: hidden;
+  z-index: 1120;
+  background: var(--frost-3);
+  -webkit-backdrop-filter: blur(80px) saturate(160%) brightness(1.06);
+  backdrop-filter: blur(80px) saturate(160%) brightness(1.06);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.65),
+    inset 0 0 18px rgba(255, 255, 255, 0.18),
+    var(--elevation-5);
+  transition:
+    opacity 220ms var(--ease-standard),
+    transform 220ms var(--ease-standard);
+}
+
+.call-window.is-closing {
+  opacity: 0;
+  transform: scale(0.94);
+}
+
+.call-panel {
+  width: 328px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--color-on-surface);
+}
+
+.call-clock {
+  align-self: flex-start;
+  margin-bottom: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.call-video {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  margin-bottom: 12px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #2a2a2e;
+}
+
+.call-remote {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.call-remote.is-audio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #fff;
+  font-size: 14px;
+  background: linear-gradient(160deg, #3a3550, #1d1b26);
+}
+
+/* Sits exactly over the self-view baked into the call still, so either one fills that corner. */
+.call-self {
+  position: absolute;
+  left: 68.6%;
+  top: 68%;
+  width: 30.4%;
+  height: 31%;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #ddd;
+}
+
+.call-self img,
+.call-self video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.call-self video {
+  opacity: 0;
+  transform: scaleX(-1);
+}
+
+.call-self video.is-live {
+  opacity: 1;
+}
+
 /* ---------- Demo panel ---------- */
 
 .demo-panel {

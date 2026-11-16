@@ -159,3 +159,9 @@ export const IconBolt = ({ size, ...p }: P) => (
     <path d="M13 3L5 13h6l-1 8 8-10h-6l1-8z" />
   </svg>
 )
+/** A handset lying on its back: the universal "end call" glyph. */
+export const IconHangUp = ({ size, ...p }: P) => (
+  <svg {...base(size)} fill="currentColor" stroke="none" {...p}>
+    <path d="M12 9.2c-2.9 0-5.6.8-7.9 2.2-.9.6-1.3 1.7-.9 2.7l.6 1.5c.4.9 1.4 1.4 2.3 1.1l2.4-.8c.8-.3 1.3-1.1 1.2-1.9l-.1-1.2c1.6-.4 3.2-.4 4.8 0l-.1 1.2c-.1.8.4 1.6 1.2 1.9l2.4.8c1 .3 2-.2 2.3-1.1l.6-1.5c.4-1 0-2.1-.9-2.7-2.3-1.4-5-2.2-7.9-2.2z" />
+  </svg>
+)

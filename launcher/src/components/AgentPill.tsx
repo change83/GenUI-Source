@@ -1,10 +1,12 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { BALL, GlassPill, type GlassTarget } from '../glass/GlassPill'
 import { AudioMotionBridge, AudioReactive } from '../glass/liquidGlass.js'
+import type { Contact } from '../data'
 import { dockPoint, type Referent } from '../reference'
+import { Avatar, HangUpButton } from './CallWindow'
 import { IconCheck } from './Icons'
 
-export type PillState = 'listening' | 'typing' | 'camera' | 'confirm' | 'caption'
+export type PillState = 'listening' | 'typing' | 'camera' | 'confirm' | 'caption' | 'calling'
 
 export interface ConfirmView {
   title: string
@@ -29,6 +31,9 @@ interface Props {
   onCaptionClick: () => void
   /** The card the user just mentioned; the pill flies over and docks on it. */
   referent: Referent | null
+  /** Who is being dialled while the pill is in the calling state. */
+  callee: Contact | null
+  onHangUp: () => void
 }
 
 const BOTTOM = 40
@@ -75,7 +80,26 @@ function formFor(p: { state: PillState; vw: number; hover: boolean; busy: boolea
       const w = Math.max(180, Math.min(fit(640), Math.ceil(textWidth(p.caption)) + 56))
       return { glass: { ...BALL, width: w, height: 52, radius: 26, glow: 55, liquid: 0 }, inset: 0 }
     }
+    case 'calling':
+      return { glass: { ...BALL, width: fit(360), height: 224, radius: 36, liquid: 0, edge: 1 }, inset: 6 }
   }
+}
+
+function Calling({ callee, onHangUp }: { callee: Contact; onHangUp: () => void }) {
+  return (
+    <div className="pill-calling">
+      <span className="calling-title">Calling ...</span>
+      <div className="calling-who">
+        <span className="calling-ring" aria-hidden>
+          <i />
+          <i />
+        </span>
+        <Avatar contact={callee} size={72} />
+      </div>
+      <span className="calling-name">{callee.name}</span>
+      <HangUpButton onClick={onHangUp} />
+    </div>
+  )
 }
 
 function Camera() {
@@ -295,6 +319,12 @@ export function AgentPill(props: Props) {
           {state === 'confirm' && props.confirm && (
             <div className="pill-content pill-card" style={box}>
               <Confirm view={props.confirm} onConfirm={props.onConfirm} />
+            </div>
+          )}
+
+          {state === 'calling' && props.callee && (
+            <div className="pill-content pill-card" style={box}>
+              <Calling callee={props.callee} onHangUp={props.onHangUp} />
             </div>
           )}
 

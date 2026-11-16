@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent } from 'react'
 import { AgentPill, type ConfirmView, type PillState } from './components/AgentPill'
 import { Background } from './components/Background'
+import { CallWindow } from './components/CallWindow'
+import { isHangUp, parseCall } from './call'
 import { FeedArea } from './components/FeedArea'
 import {
   IconArchive,
@@ -22,10 +24,12 @@ import { useTrailingCards } from './useTrailingCards'
 import {
   archivedOutputs,
   backgroundTasks,
+  contacts,
   conversation,
   initialOutputs,
   initialWidgets,
   recommendedTasks,
+  type Contact,
   type Output,
   type OutputKind,
   type RecommendedTask,
@@ -50,6 +54,18 @@ const GROUP_GAP = 60
 // Typing settles for a moment before the pill moves; a spoken reference is held this long.
 const TYPED_SETTLE_MS = 200
 const SPOKEN_HOLD_MS = 5000
+// Simulated ring time before the other side picks up.
+const RING_MS = 3200
+const UNKNOWN_NAME_SETTLE_MS = 700
+
+interface Call {
+  contact: Contact
+  phase: 'dialing' | 'connected'
+  /** When the call connected, for the call clock. */
+  since: number
+  /** Where the calling card was when the call connected; the call window starts from there. */
+  from: { left: number; top: number; width: number; height: number } | null
+}
 
 function confirmFor(kind: OutputKind, title: string): ConfirmView | null {
   if (kind === 'report')
@@ -117,16 +133,22 @@ export default function App() {
   const step = job ? STEPS[Math.min(STEPS.length - 1, Math.floor((job.progress / 100) * STEPS.length))] : ''
   const caption = flash?.text ?? (muted && job && !awaitingConfirm ? `${step}… ${Math.round(job.progress)}%` : '')
 
+  // Phone call: dialling turns the pill into the calling card; once connected the call moves into
+  // its own window and the pill goes back to being the ball.
+  const [call, setCall] = useState<Call | null>(null)
+
   const pill: PillState =
     mode === 'typing'
       ? 'typing'
       : mode === 'camera'
         ? 'camera'
-        : awaitingConfirm && !deferred
-          ? 'confirm'
-          : caption
-            ? 'caption'
-            : 'listening'
+        : call?.phase === 'dialing'
+          ? 'calling'
+          : awaitingConfirm && !deferred
+            ? 'confirm'
+            : caption
+              ? 'caption'
+              : 'listening'
 
   /** Agent feedback is spoken; with the speaker off it becomes a one-line caption. */
   const announce = useCallback(
@@ -142,6 +164,35 @@ export default function App() {
     const t = setTimeout(() => setFlash(null), 5000)
     return () => clearTimeout(t)
   }, [flash])
+
+  const startCall = useCallback((contact: Contact) => {
+    setCall({ contact, phase: 'dialing', since: 0, from: null })
+    setInput('')
+    setMode('auto')
+    setFlash(null)
+  }, [])
+
+  const endCall = useCallback(() => {
+    setCall(null)
+    announce('Call ended.')
+  }, [announce])
+
+  useEffect(() => {
+    if (call?.phase !== 'dialing') return
+    const t = setTimeout(() => {
+      const r = document.querySelector('.pill-shell')?.getBoundingClientRect()
+      const from = r ? { left: r.left, top: r.top, width: r.width, height: r.height } : null
+      setCall((c) => (c && c.phase === 'dialing' ? { ...c, phase: 'connected', since: Date.now(), from } : c))
+    }, RING_MS)
+    return () => clearTimeout(t)
+  }, [call?.phase])
+
+  // The speech listener lives across renders; it reads the current call through refs.
+  const live = useRef({ call, startCall, endCall })
+  useEffect(() => {
+    live.current = { call, startCall, endCall }
+  })
+  const saidOnce = useRef(false)
 
   // Referring: when the user types or says words that are on screen, the pill flies to the card
   // that shows them and the card ripples. A reference belongs to the pill form it was made in,
@@ -163,7 +214,18 @@ export default function App() {
   useEffect(() => {
     if (pill !== 'listening' || !micOn) return
     let hold = 0
+    let dial = 0
     const heard = (text: string) => {
+      const { call, startCall, endCall } = live.current
+      if (call && isHangUp(text)) return endCall()
+      const request = call ? null : parseCall(text)
+      clearTimeout(dial)
+      if (request) {
+        // An unknown name may still be mid-word in an interim result; wait for it to settle.
+        if (request.known) startCall(request.contact)
+        else dial = window.setTimeout(() => startCall(request.contact), UNKNOWN_NAME_SETTLE_MS)
+        return
+      }
       const next = findReferent(text)
       if (!next) return
       refer(next, 'listening')
@@ -173,11 +235,18 @@ export default function App() {
     const params = new URLSearchParams(window.location.search)
     const stop = listenForSpeech(heard, params.get('lang') ?? 'en-US')
     // ?say=competitor stands in for a spoken phrase where there is no microphone or recognition service.
-    const said = params.get('say')
-    const sim = said ? window.setTimeout(() => heard(said), 800) : 0
+    // It is said once per page load, not every time the pill comes back to listening.
+    const said = saidOnce.current ? null : params.get('say')
+    const sim = said
+      ? window.setTimeout(() => {
+          saidOnce.current = true
+          heard(said)
+        }, 800)
+      : 0
     return () => {
       stop()
       clearTimeout(hold)
+      clearTimeout(dial)
       clearTimeout(sim)
     }
   }, [pill, micOn, refer])
@@ -234,18 +303,19 @@ export default function App() {
       if (target.closest('input, textarea, [contenteditable]')) return
       if (e.key === 'Escape') {
         if (preview) return setPreview(null)
+        if (pill === 'calling') return endCall()
         setMode('auto')
         return
       }
       if (e.metaKey || e.ctrlKey || e.altKey || e.key.length !== 1) return
-      if (pill === 'confirm' || pill === 'camera') return
+      if (pill === 'confirm' || pill === 'camera' || pill === 'calling') return
       e.preventDefault()
       setInput((v) => (mode === 'typing' ? v + e.key : e.key))
       setMode('typing')
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [pill, mode, preview])
+  }, [pill, mode, preview, endCall])
 
   // Center the pinned + dynamic group once, then keep it on screen as the window changes.
   const clamp = useCallback((p: { x: number; y: number }) => {
@@ -405,6 +475,7 @@ export default function App() {
         setFlash({ text: "Your speaker is off, so I'll show my replies here." })
       },
     },
+    { state: 'calling', label: 'Phone call', run: () => startCall(contacts[0]) },
   ]
 
   return (
@@ -464,7 +535,18 @@ export default function App() {
         micOn={micOn}
         input={input}
         onInput={setInput}
-        onSubmit={() => input.trim() && startJob(input.trim(), guessKind(input))}
+        onSubmit={() => {
+          const text = input.trim()
+          if (!text) return
+          if (call && isHangUp(text)) {
+            setInput('')
+            setMode('auto')
+            return endCall()
+          }
+          const request = call ? null : parseCall(text)
+          if (request) startCall(request.contact)
+          else startJob(text, guessKind(text))
+        }}
         onCancel={() => {
           setInput('')
           setMode('auto')
@@ -486,7 +568,13 @@ export default function App() {
           setFlash(null)
         }}
         referent={referent}
+        callee={call?.phase === 'dialing' ? call.contact : null}
+        onHangUp={endCall}
       />
+
+      {call?.phase === 'connected' && (
+        <CallWindow key={call.since} contact={call.contact} since={call.since} from={call.from} onHangUp={endCall} />
+      )}
 
       <TaskDrawer tasks={drawerTasks} />
 

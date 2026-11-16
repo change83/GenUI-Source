@@ -20,6 +20,7 @@ npm run dev
 | Camera | Camera button in the text field; a live preview with a single recognition tag. Click outside or press Esc to close |
 | Collaboration | A confirmation card when a running task needs your decision |
 | Caption | With the speaker off (top-right), agent replies appear as a one-line caption |
+| Phone call | The ball becomes a "Calling ..." card; once connected the call window splits off to the top-left |
 
 The **Agent states** panel (bottom left) jumps to any state for demos.
 
@@ -32,3 +33,13 @@ Say or type a word that is on screen and the agent pill flies to the card or wid
 - **Without a microphone**: `?say=competitor` plays that phrase as if it had been heard, once you click **Listening**. Chrome's speech recognition needs to reach Google's service, so use this (or typing) where that is blocked.
 
 Matching (`src/reference.ts`) reads the text of the feed cards and pinned widgets, tolerates plurals, word prefixes while typing and small misspellings, and lets the latest on-screen word decide.
+
+## Phone call
+
+Tell the agent to call someone: type or say `call mom`, `给妈妈打电话`, `打电话给老妈` or `phone Alex Chen`.
+
+- **Dialing**: the ball morphs into a "Calling ..." card with the contact's avatar, name and a red hang-up button. It rings for about 3s.
+- **Connected**: the call window (timer, remote video, your camera in the corner, hang-up) splits off the card and floats to the desktop's top-left, while the pill shrinks back into the ball. You can keep using the agent during the call.
+- **Hanging up**: the red button, Esc while dialing, or typing/saying `hang up` / `挂断`.
+
+Your own camera shows in the corner when the browser grants it; otherwise a still stands in. Contacts live in `src/data.ts`; an unknown name gets an initials avatar and a voice-only view. Parsing is in `src/call.ts`. Without a microphone, `?say=call%20mom` works like the referring demo above.
