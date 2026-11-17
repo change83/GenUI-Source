@@ -35,7 +35,7 @@ function Menu({ onBack, onOrder }: { onBack: () => void; onOrder: (summary: stri
           const n = qty[m.id] ?? 0
           return (
             <li key={m.id}>
-              <i className="booking-thumb" style={{ background: m.tint }} aria-hidden />
+              <img className="booking-thumb" src={m.image} alt="" width={40} height={40} />
               <div>
                 <strong>{m.name}</strong>
                 <span>{m.note}</span>

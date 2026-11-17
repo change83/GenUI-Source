@@ -3,7 +3,7 @@ export interface MenuItem {
   name: string
   note: string
   price: number
-  tint: string
+  image: string
 }
 
 export interface Route {
@@ -21,10 +21,10 @@ export const store = {
   time: '3 p.m.',
   message: 'Your reserved seat for 3 p.m. has been confirmed. Please arrive on time.',
   menu: [
-    { id: 'flat-white', name: 'Flat White', note: 'Double ristretto, whole milk', price: 4.5, tint: '#c99a6b' },
-    { id: 'matcha', name: 'Iced Matcha Latte', note: 'Uji matcha, oat milk', price: 5, tint: '#8fbf6a' },
-    { id: 'scone', name: 'Blueberry Scone', note: 'Baked this morning', price: 3.8, tint: '#7a8fd6' },
-    { id: 'toast', name: 'Avocado Toast', note: 'Sourdough, chilli flakes', price: 8.5, tint: '#b5c96a' },
+    { id: 'flat-white', name: 'Flat White', note: 'Double ristretto, whole milk', price: 4.5, image: '/menu/flat-white.jpg' },
+    { id: 'matcha', name: 'Iced Matcha Latte', note: 'Uji matcha, oat milk', price: 5, image: '/menu/iced-matcha-latte.jpg' },
+    { id: 'scone', name: 'Blueberry Scone', note: 'Baked this morning', price: 3.8, image: '/menu/blueberry-scone.jpg' },
+    { id: 'toast', name: 'Avocado Toast', note: 'Sourdough, chilli flakes', price: 8.5, image: '/menu/avocado-toast.jpg' },
   ] satisfies MenuItem[],
   routes: [
     { mode: 'walk', label: 'Walk', minutes: 8, distance: '650 m' },
