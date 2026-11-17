@@ -16,6 +16,7 @@ export interface Route {
 /** The shop's agent the user books through, and what its reservation reply carries. */
 export const store = {
   name: 'Bluebird cafe',
+  logo: '/bluebird.png',
   address: '12 Maple Street',
   time: '3 p.m.',
   message: 'Your reserved seat for 3 p.m. has been confirmed. Please arrive on time.',

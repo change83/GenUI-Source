@@ -2,6 +2,8 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 import { AgentPill, type ConfirmView, type PillState } from './components/AgentPill'
 import { Background } from './components/Background'
 import type { BookingView } from './components/BookingCard'
+import type { FridgeView } from './components/FridgeCard'
+import { fridge as fridgeAgent, isCookingQuestion } from './fridge'
 import { isBookingRequest, store } from './booking'
 import { CallWindow } from './components/CallWindow'
 import { isHangUp, parseCall } from './call'
@@ -62,6 +64,9 @@ const UNKNOWN_NAME_SETTLE_MS = 700
 // The reservation reply's actions fade if left alone; the short notice then returns to the ball.
 const BOOKING_ACTIONS_MS = 6000
 const BOOKING_NOTICE_MS = 4000
+const FRIDGE_ORDERED_MS = 4000
+// Cards from other agents wait for the end of the sentence; this long without new words also ends it.
+const SENTENCE_SETTLE_MS = 1200
 
 interface Call {
   contact: Contact
@@ -144,6 +149,8 @@ export default function App() {
   // Reservation with a shop's agent: the pill shows the shop's reply until it times out or is used.
   const [booking, setBooking] = useState<BookingView | null>(null)
   const bookingHeld = useRef(false)
+  // Cooking questions go to the fridge's agent, which answers with what tonight's dish still needs.
+  const [fridge, setFridge] = useState<FridgeView | null>(null)
 
   const pill: PillState =
     mode === 'typing'
@@ -154,7 +161,9 @@ export default function App() {
           ? 'calling'
           : booking
             ? 'booking'
-            : awaitingConfirm && !deferred
+            : fridge
+              ? 'fridge'
+              : awaitingConfirm && !deferred
             ? 'confirm'
             : caption
               ? 'caption'
@@ -189,11 +198,27 @@ export default function App() {
 
   const openBooking = useCallback(() => {
     setBooking('result')
+    setFridge(null)
     setInput('')
     setMode('auto')
     setFlash(null)
     if (!muted) speak(`${store.name} confirmed your seat for ${store.time}.`)
   }, [muted])
+
+  const openFridge = useCallback(() => {
+    setFridge('check')
+    setBooking(null)
+    setInput('')
+    setMode('auto')
+    setFlash(null)
+    if (!muted) speak(fridgeAgent.message)
+  }, [muted])
+
+  useEffect(() => {
+    if (fridge !== 'ordered') return
+    const t = setTimeout(() => setFridge(null), FRIDGE_ORDERED_MS)
+    return () => clearTimeout(t)
+  }, [fridge])
 
   const holdBooking = useCallback((held: boolean) => {
     bookingHeld.current = held
@@ -222,9 +247,9 @@ export default function App() {
   }, [call?.phase])
 
   // The speech listener lives across renders; it reads the current call through refs.
-  const live = useRef({ call, startCall, endCall, booking, openBooking })
+  const live = useRef({ call, startCall, endCall, booking, openBooking, fridge, openFridge })
   useEffect(() => {
-    live.current = { call, startCall, endCall, booking, openBooking }
+    live.current = { call, startCall, endCall, booking, openBooking, fridge, openFridge }
   })
   const saidOnce = useRef(false)
 
@@ -249,8 +274,10 @@ export default function App() {
     if (pill !== 'listening' || !micOn) return
     let hold = 0
     let dial = 0
-    const heard = (text: string) => {
-      const { call, startCall, endCall, booking, openBooking } = live.current
+    let settle = 0
+    let pending = ''
+    const heard = (text: string, final: boolean) => {
+      const { call, startCall, endCall, booking, openBooking, fridge, openFridge } = live.current
       if (call && isHangUp(text)) return endCall()
       const request = call ? null : parseCall(text)
       clearTimeout(dial)
@@ -260,7 +287,15 @@ export default function App() {
         else dial = window.setTimeout(() => startCall(request.contact), UNKNOWN_NAME_SETTLE_MS)
         return
       }
-      if (!booking && isBookingRequest(text)) return openBooking()
+      const open = booking || fridge ? null : isBookingRequest(text) ? openBooking : isCookingQuestion(text) ? openFridge : null
+      if (open && !final && text === pending) return
+      clearTimeout(settle)
+      pending = open && !final ? text : ''
+      if (open) {
+        if (final) open()
+        else settle = window.setTimeout(open, SENTENCE_SETTLE_MS)
+        return
+      }
       const next = findReferent(text)
       if (!next) return
       refer(next, 'listening')
@@ -275,13 +310,14 @@ export default function App() {
     const sim = said
       ? window.setTimeout(() => {
           saidOnce.current = true
-          heard(said)
+          heard(said, true)
         }, 800)
       : 0
     return () => {
       stop()
       clearTimeout(hold)
       clearTimeout(dial)
+      clearTimeout(settle)
       clearTimeout(sim)
     }
   }, [pill, micOn, refer])
@@ -340,6 +376,7 @@ export default function App() {
         if (preview) return setPreview(null)
         if (pill === 'calling') return endCall()
         if (pill === 'booking') return setBooking(null)
+        if (pill === 'fridge') return setFridge(null)
         setMode('auto')
         return
       }
@@ -349,13 +386,17 @@ export default function App() {
         if (booking === 'menu' || booking === 'directions') return
         setBooking(null)
       }
+      if (pill === 'fridge') {
+        if (fridge === 'substitutes') return
+        setFridge(null)
+      }
       e.preventDefault()
       setInput((v) => (mode === 'typing' ? v + e.key : e.key))
       setMode('typing')
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [pill, mode, preview, endCall, booking])
+  }, [pill, mode, preview, endCall, booking, fridge])
 
   // Center the pinned + dynamic group once, then keep it on screen as the window changes.
   const clamp = useCallback((p: { x: number; y: number }) => {
@@ -517,6 +558,7 @@ export default function App() {
     },
     { state: 'calling', label: 'Phone call', run: () => startCall(contacts[0]) },
     { state: 'booking', label: 'Reservation', run: openBooking },
+    { state: 'fridge', label: 'Fridge', run: openFridge },
   ]
 
   return (
@@ -572,6 +614,7 @@ export default function App() {
       {pill === 'booking' && (booking === 'menu' || booking === 'directions') && (
         <div className="dismiss-layer" onClick={() => setBooking(null)} aria-hidden />
       )}
+      {pill === 'fridge' && <div className="dismiss-layer" onClick={() => setFridge(null)} aria-hidden />}
 
       <AgentPill
         state={pill}
@@ -590,6 +633,7 @@ export default function App() {
           const request = call ? null : parseCall(text)
           if (request) startCall(request.contact)
           else if (isBookingRequest(text)) openBooking()
+          else if (isCookingQuestion(text)) openFridge()
           else startJob(text, guessKind(text))
         }}
         onCancel={() => {
@@ -625,6 +669,16 @@ export default function App() {
         onGo={(route) => {
           setBooking(null)
           announce(`${route.label} directions to ${store.name} started, ${route.minutes} minutes.`)
+        }}
+        fridge={fridge}
+        onFridgeView={setFridge}
+        onPickSubstitute={(sub) => {
+          setFridge(null)
+          announce(
+            sub.price
+              ? `Ordered ${sub.name.toLowerCase()} for ${fridgeAgent.dish}.`
+              : `Use ${sub.name.toLowerCase()} instead of mascarpone. You're all set for ${fridgeAgent.dish}.`,
+          )
         }}
       />
 

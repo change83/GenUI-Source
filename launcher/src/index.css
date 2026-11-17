@@ -1955,7 +1955,7 @@ p {
 }
 
 .pill-booking {
-  --bluebird: #9b40dc;
+  --card-accent: #9b40dc;
   position: absolute;
   left: 0;
   top: 0;
@@ -1991,11 +1991,6 @@ p {
 
 .bluebird-logo {
   flex: none;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: #fff;
-  border: 1px solid #e4e4e8;
 }
 
 .booking-actions {
@@ -2023,7 +2018,7 @@ p {
   border-radius: 12px;
   font-size: 14px;
   font-weight: 500;
-  color: var(--bluebird);
+  color: var(--card-accent);
   background: #f2f2f5;
   transition:
     background var(--duration-fast),
@@ -2157,14 +2152,14 @@ p {
   display: grid;
   place-items: center;
   border-radius: 50%;
-  color: var(--bluebird);
+  color: var(--card-accent);
   background: #f2ecfa;
 }
 
 .booking-stepper.is-on button:last-child,
 .booking-stepper button:hover {
   color: #fff;
-  background: var(--bluebird);
+  background: var(--card-accent);
 }
 
 .booking-stepper b {
@@ -2207,7 +2202,7 @@ p {
 
 .booking-modes button.is-on {
   background: #f2ecfa;
-  color: var(--bluebird);
+  color: var(--card-accent);
   font-weight: 600;
 }
 
@@ -2215,6 +2210,177 @@ p {
   margin-left: auto;
   font-size: 13px;
   color: var(--color-on-surface-muted);
+}
+
+/* fridge: the fridge agent's answer to a cooking question; shares the booking card's parts */
+
+.pill-fridge {
+  --card-accent: #9b40dc;
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 22px 22px;
+}
+
+.pill-fridge.is-substitutes {
+  padding: 16px 20px 20px;
+  animation: fade-up 260ms var(--ease-out) both;
+}
+
+.fridge-reply {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 9px;
+}
+
+.fridge-reply p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.fridge-avatar {
+  flex: none;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.fridge-list {
+  list-style: none;
+  margin: 2px 0 0 74px;
+  padding: 0;
+}
+
+.fridge-list li {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.fridge-list i {
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #2f9e57;
+  background: #e6f4ea;
+}
+
+.fridge-list .is-missing i {
+  color: #e5484d;
+  background: #fdeaea;
+}
+
+.fridge-list em {
+  margin-left: auto;
+  font-style: normal;
+  color: var(--color-on-surface-muted);
+}
+
+.fridge-product {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 62px;
+  margin-top: 16px;
+  border: 1px solid #e8e8ec;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.fridge-product img {
+  flex: none;
+  object-fit: cover;
+}
+
+.fridge-product div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fridge-product span {
+  font-size: 14px;
+}
+
+.fridge-product strong {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.pill-fridge .booking-actions {
+  margin-top: 12px;
+}
+
+.fridge-subs {
+  list-style: none;
+  margin: 12px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fridge-subs button {
+  width: 100%;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 14px;
+  border-radius: 14px;
+  text-align: left;
+  border: 1px solid #ececf0;
+  transition:
+    border-color var(--duration-fast),
+    background var(--duration-fast);
+}
+
+.fridge-subs button.is-on {
+  border-color: rgba(155, 64, 220, 0.45);
+  background: #faf6fe;
+}
+
+.fridge-subs i {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid #c9c7d0;
+}
+
+.fridge-subs .is-on i {
+  border: 5px solid var(--card-accent);
+}
+
+.fridge-subs span {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.fridge-subs strong {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.fridge-subs small {
+  font-size: 12px;
+  color: var(--color-on-surface-muted);
+}
+
+.fridge-subs em {
+  font-style: normal;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-on-surface-variant);
 }
 
 /* ---------- Phone call ---------- */

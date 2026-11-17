@@ -2,13 +2,15 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { BALL, GlassPill, type GlassTarget } from '../glass/GlassPill'
 import { AudioMotionBridge, AudioReactive } from '../glass/liquidGlass.js'
 import type { Route } from '../booking'
+import type { Substitute } from '../fridge'
 import type { Contact } from '../data'
 import { dockPoint, type Referent } from '../reference'
 import { BookingCard, type BookingView } from './BookingCard'
 import { Avatar, HangUpButton } from './CallWindow'
+import { FridgeCard, type FridgeView } from './FridgeCard'
 import { IconCheck } from './Icons'
 
-export type PillState = 'listening' | 'typing' | 'camera' | 'confirm' | 'caption' | 'calling' | 'booking'
+export type PillState = 'listening' | 'typing' | 'camera' | 'confirm' | 'caption' | 'calling' | 'booking' | 'fridge'
 
 export interface ConfirmView {
   title: string
@@ -42,6 +44,10 @@ interface Props {
   onBookingHold: (held: boolean) => void
   onOrder: (summary: string) => void
   onGo: (route: Route) => void
+  /** The fridge agent's answer to a cooking question. */
+  fridge: FridgeView | null
+  onFridgeView: (view: FridgeView) => void
+  onPickSubstitute: (s: Substitute) => void
 }
 
 const BOTTOM = 40
@@ -71,6 +77,7 @@ interface Form {
 }
 
 const BOOKING_HEIGHT: Record<BookingView, number> = { result: 224, compact: 144, menu: 376, directions: 364 }
+const FRIDGE_HEIGHT: Record<FridgeView, number> = { check: 412, substitutes: 328, ordered: 144 }
 
 function formFor(p: {
   state: PillState
@@ -79,6 +86,7 @@ function formFor(p: {
   busy: boolean
   caption: string
   booking: BookingView | null
+  fridge: FridgeView | null
 }): Form {
   const fit = (w: number) => Math.min(w, p.vw - 48)
   switch (p.state) {
@@ -102,6 +110,11 @@ function formFor(p: {
     case 'booking':
       return {
         glass: { ...BALL, width: fit(424), height: BOOKING_HEIGHT[p.booking ?? 'result'], radius: 36, liquid: 0, edge: 1 },
+        inset: 6,
+      }
+    case 'fridge':
+      return {
+        glass: { ...BALL, width: fit(424), height: FRIDGE_HEIGHT[p.fridge ?? 'check'], radius: 36, liquid: 0, edge: 1 },
         inset: 6,
       }
   }
@@ -231,13 +244,18 @@ export function AgentPill(props: Props) {
 
   const form = useMemo(
     () =>
-      formFor({ state, vw, hover: hover && state === 'listening', busy: props.busy, caption: props.caption, booking: props.booking }),
-    [state, vw, hover, props.busy, props.caption, props.booking],
+      formFor({ state, vw, hover: hover && state === 'listening', busy: props.busy, caption: props.caption, booking: props.booking, fridge: props.fridge }),
+    [state, vw, hover, props.busy, props.caption, props.booking, props.fridge],
   )
   const box = { width: form.glass.width - form.inset * 2, height: form.glass.height - form.inset * 2 }
 
   // Collapsing the reservation reply keeps its content; opening the menu or directions swaps it.
-  const contentKey = state === 'booking' ? `booking-${props.booking === 'compact' ? 'result' : props.booking}` : state
+  const contentKey =
+    state === 'booking'
+      ? `booking-${props.booking === 'compact' ? 'result' : props.booking}`
+      : state === 'fridge'
+        ? `fridge-${props.fridge}`
+        : state
   useLayoutEffect(() => {
     glassRef.current?.hideContent()
   }, [contentKey])
@@ -363,6 +381,12 @@ export function AgentPill(props: Props) {
                 onOrder={props.onOrder}
                 onGo={props.onGo}
               />
+            </div>
+          )}
+
+          {state === 'fridge' && props.fridge && (
+            <div className="pill-content pill-card is-fluid">
+              <FridgeCard view={props.fridge} size={box} onView={props.onFridgeView} onPick={props.onPickSubstitute} />
             </div>
           )}
 

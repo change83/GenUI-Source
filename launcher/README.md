@@ -22,6 +22,7 @@ npm run dev
 | Caption | With the speaker off (top-right), agent replies appear as a one-line caption |
 | Phone call | The ball becomes a "Calling ..." card; once connected the call window splits off to the top-left |
 | Reservation | The ball becomes the shop agent's reservation reply, with Ordering Menu and Directions |
+| Fridge | The ball becomes the fridge agent's check for tonight's dish, with Buy now and Find substitutes |
 
 The **Agent states** panel (bottom left) jumps to any state for demos.
 
@@ -53,5 +54,17 @@ Book through a shop's agent: type or say `bluebird`, `蓝鸟`, `reserve`, `book 
 - **Ordering Menu**: the card grows into the menu; add items and pre-order them for 3 p.m.
 - **Directions**: a route map with walk / drive / bus times and a start button.
 - Back returns to the reply; Esc or a click outside closes it. Menu and directions stay until you close them.
+- Spoken requests open the card once the sentence is finished: when the recognizer marks it final, or after 1.2s without new words.
 
 The shop, menu and routes are in `src/booking.ts`; the card is `src/components/BookingCard.tsx`.
+
+## Fridge
+
+Ask a cooking question, typed or spoken: `what can I cook tonight`, `what should I make for dinner`, `今晚做什么菜好`, `我想做提拉米苏`, `冰箱里还有什么`. As with reservations, a spoken question opens the card only after the sentence is finished.
+
+The ball turns into the fridge agent's confirmation card. It shows "You're almost ready to make tiramisu tonight!" with the ingredient check (eggs, cheese, sugar, coffee), the missing Mascarpone Cheese 225 g at $5.99, and two buttons:
+
+- **Buy now**: the card shrinks to "Mascarpone is on its way, arriving by 5 p.m. today." and returns to the ball after 4s.
+- **Find substitutes**: three options. Greek yogurt + heavy cream is already in the fridge; cream cheese + heavy cream and blended ricotta can be bought. The button changes to "Use what I have" or "Buy · $price".
+
+The card waits for a decision. Esc or a click outside closes it. The fridge's contents are in `src/fridge.ts`; the card is `src/components/FridgeCard.tsx`.

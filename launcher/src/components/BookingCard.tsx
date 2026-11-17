@@ -5,19 +5,7 @@ import { IconChevronLeft, IconMinus, IconNavigate, IconPlus } from './Icons'
 export type BookingView = 'result' | 'compact' | 'menu' | 'directions'
 
 export function BluebirdLogo({ size = 60 }: { size?: number }) {
-  return (
-    <span className="bluebird-logo" style={{ width: size, height: size }} aria-hidden>
-      <svg viewBox="0 0 64 64" width={size * 0.76} height={size * 0.76}>
-        <path
-          fill="#1f5fc4"
-          d="M10 44c5-1 9-4 12-8 4-6 9-11 17-12 1-5 5-9 10-9 4 0 6 2 7 5l5 1-5 3c0 9-5 17-14 21-6 3-13 3-19 1l-10 7 3-8z"
-        />
-        <path fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" d="M27 37c5-1 10-4 13-8" />
-        <circle cx="51" cy="20" r="1.9" fill="#fff" />
-        <path stroke="#1f5fc4" strokeWidth="2.2" strokeLinecap="round" d="M34 49l-1 6M39 48l1 6" />
-      </svg>
-    </span>
-  )
+  return <img className="bluebird-logo" src={store.logo} alt="" width={size} height={size} />
 }
 
 function Header({ title, sub, onBack }: { title: string; sub: string; onBack: () => void }) {
