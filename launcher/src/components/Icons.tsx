@@ -101,6 +101,21 @@ export const IconChevronDown = ({ size, ...p }: P) => (
     <path d="M6 9l6 6 6-6" />
   </svg>
 )
+export const IconChevronLeft = ({ size, ...p }: P) => (
+  <svg {...base(size)} {...p}>
+    <path d="M15 6l-6 6 6 6" />
+  </svg>
+)
+export const IconMinus = ({ size, ...p }: P) => (
+  <svg {...base(size)} {...p}>
+    <path d="M5 12h14" />
+  </svg>
+)
+export const IconNavigate = ({ size, ...p }: P) => (
+  <svg {...base(size)} {...p}>
+    <path d="M20 4L3 11l7 2.5L12.5 21z" />
+  </svg>
+)
 export const IconRun = ({ size, ...p }: P) => (
   <svg {...base(size)} {...p}>
     <circle cx="15" cy="4.5" r="1.8" fill="currentColor" stroke="none" />

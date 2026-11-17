@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent } from 'react'
 import { AgentPill, type ConfirmView, type PillState } from './components/AgentPill'
 import { Background } from './components/Background'
+import type { BookingView } from './components/BookingCard'
+import { isBookingRequest, store } from './booking'
 import { CallWindow } from './components/CallWindow'
 import { isHangUp, parseCall } from './call'
 import { FeedArea } from './components/FeedArea'
@@ -57,6 +59,9 @@ const SPOKEN_HOLD_MS = 5000
 // Simulated ring time before the other side picks up.
 const RING_MS = 3200
 const UNKNOWN_NAME_SETTLE_MS = 700
+// The reservation reply's actions fade if left alone; the short notice then returns to the ball.
+const BOOKING_ACTIONS_MS = 6000
+const BOOKING_NOTICE_MS = 4000
 
 interface Call {
   contact: Contact
@@ -136,6 +141,9 @@ export default function App() {
   // Phone call: dialling turns the pill into the calling card; once connected the call moves into
   // its own window and the pill goes back to being the ball.
   const [call, setCall] = useState<Call | null>(null)
+  // Reservation with a shop's agent: the pill shows the shop's reply until it times out or is used.
+  const [booking, setBooking] = useState<BookingView | null>(null)
+  const bookingHeld = useRef(false)
 
   const pill: PillState =
     mode === 'typing'
@@ -144,7 +152,9 @@ export default function App() {
         ? 'camera'
         : call?.phase === 'dialing'
           ? 'calling'
-          : awaitingConfirm && !deferred
+          : booking
+            ? 'booking'
+            : awaitingConfirm && !deferred
             ? 'confirm'
             : caption
               ? 'caption'
@@ -177,6 +187,30 @@ export default function App() {
     announce('Call ended.')
   }, [announce])
 
+  const openBooking = useCallback(() => {
+    setBooking('result')
+    setInput('')
+    setMode('auto')
+    setFlash(null)
+    if (!muted) speak(`${store.name} confirmed your seat for ${store.time}.`)
+  }, [muted])
+
+  const holdBooking = useCallback((held: boolean) => {
+    bookingHeld.current = held
+  }, [])
+
+  useEffect(() => {
+    if (!booking) bookingHeld.current = false
+    if (booking !== 'result' && booking !== 'compact') return
+    let t = 0
+    const lapse = () => {
+      if (bookingHeld.current) t = window.setTimeout(lapse, 600)
+      else setBooking(booking === 'result' ? 'compact' : null)
+    }
+    t = window.setTimeout(lapse, booking === 'result' ? BOOKING_ACTIONS_MS : BOOKING_NOTICE_MS)
+    return () => clearTimeout(t)
+  }, [booking])
+
   useEffect(() => {
     if (call?.phase !== 'dialing') return
     const t = setTimeout(() => {
@@ -188,9 +222,9 @@ export default function App() {
   }, [call?.phase])
 
   // The speech listener lives across renders; it reads the current call through refs.
-  const live = useRef({ call, startCall, endCall })
+  const live = useRef({ call, startCall, endCall, booking, openBooking })
   useEffect(() => {
-    live.current = { call, startCall, endCall }
+    live.current = { call, startCall, endCall, booking, openBooking }
   })
   const saidOnce = useRef(false)
 
@@ -216,7 +250,7 @@ export default function App() {
     let hold = 0
     let dial = 0
     const heard = (text: string) => {
-      const { call, startCall, endCall } = live.current
+      const { call, startCall, endCall, booking, openBooking } = live.current
       if (call && isHangUp(text)) return endCall()
       const request = call ? null : parseCall(text)
       clearTimeout(dial)
@@ -226,6 +260,7 @@ export default function App() {
         else dial = window.setTimeout(() => startCall(request.contact), UNKNOWN_NAME_SETTLE_MS)
         return
       }
+      if (!booking && isBookingRequest(text)) return openBooking()
       const next = findReferent(text)
       if (!next) return
       refer(next, 'listening')
@@ -304,18 +339,23 @@ export default function App() {
       if (e.key === 'Escape') {
         if (preview) return setPreview(null)
         if (pill === 'calling') return endCall()
+        if (pill === 'booking') return setBooking(null)
         setMode('auto')
         return
       }
       if (e.metaKey || e.ctrlKey || e.altKey || e.key.length !== 1) return
       if (pill === 'confirm' || pill === 'camera' || pill === 'calling') return
+      if (pill === 'booking') {
+        if (booking === 'menu' || booking === 'directions') return
+        setBooking(null)
+      }
       e.preventDefault()
       setInput((v) => (mode === 'typing' ? v + e.key : e.key))
       setMode('typing')
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [pill, mode, preview, endCall])
+  }, [pill, mode, preview, endCall, booking])
 
   // Center the pinned + dynamic group once, then keep it on screen as the window changes.
   const clamp = useCallback((p: { x: number; y: number }) => {
@@ -476,6 +516,7 @@ export default function App() {
       },
     },
     { state: 'calling', label: 'Phone call', run: () => startCall(contacts[0]) },
+    { state: 'booking', label: 'Reservation', run: openBooking },
   ]
 
   return (
@@ -528,6 +569,9 @@ export default function App() {
       <ReferenceRipple target={referent?.el ?? null} onLost={() => setReference(null)} />
 
       {pill === 'camera' && <div className="dismiss-layer" onClick={() => setMode('auto')} aria-hidden />}
+      {pill === 'booking' && (booking === 'menu' || booking === 'directions') && (
+        <div className="dismiss-layer" onClick={() => setBooking(null)} aria-hidden />
+      )}
 
       <AgentPill
         state={pill}
@@ -545,6 +589,7 @@ export default function App() {
           }
           const request = call ? null : parseCall(text)
           if (request) startCall(request.contact)
+          else if (isBookingRequest(text)) openBooking()
           else startJob(text, guessKind(text))
         }}
         onCancel={() => {
@@ -570,6 +615,17 @@ export default function App() {
         referent={referent}
         callee={call?.phase === 'dialing' ? call.contact : null}
         onHangUp={endCall}
+        booking={booking}
+        onBookingView={setBooking}
+        onBookingHold={holdBooking}
+        onOrder={(summary) => {
+          setBooking(null)
+          announce(`Pre-order sent to ${store.name}: ${summary}. It will be ready at ${store.time}.`)
+        }}
+        onGo={(route) => {
+          setBooking(null)
+          announce(`${route.label} directions to ${store.name} started, ${route.minutes} minutes.`)
+        }}
       />
 
       {call?.phase === 'connected' && (

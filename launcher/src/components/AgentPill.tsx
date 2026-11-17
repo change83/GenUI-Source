@@ -1,12 +1,14 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { BALL, GlassPill, type GlassTarget } from '../glass/GlassPill'
 import { AudioMotionBridge, AudioReactive } from '../glass/liquidGlass.js'
+import type { Route } from '../booking'
 import type { Contact } from '../data'
 import { dockPoint, type Referent } from '../reference'
+import { BookingCard, type BookingView } from './BookingCard'
 import { Avatar, HangUpButton } from './CallWindow'
 import { IconCheck } from './Icons'
 
-export type PillState = 'listening' | 'typing' | 'camera' | 'confirm' | 'caption' | 'calling'
+export type PillState = 'listening' | 'typing' | 'camera' | 'confirm' | 'caption' | 'calling' | 'booking'
 
 export interface ConfirmView {
   title: string
@@ -34,6 +36,12 @@ interface Props {
   /** Who is being dialled while the pill is in the calling state. */
   callee: Contact | null
   onHangUp: () => void
+  /** The shop agent's reservation reply and what it is showing. */
+  booking: BookingView | null
+  onBookingView: (view: BookingView) => void
+  onBookingHold: (held: boolean) => void
+  onOrder: (summary: string) => void
+  onGo: (route: Route) => void
 }
 
 const BOTTOM = 40
@@ -62,7 +70,16 @@ interface Form {
   inset: number
 }
 
-function formFor(p: { state: PillState; vw: number; hover: boolean; busy: boolean; caption: string }): Form {
+const BOOKING_HEIGHT: Record<BookingView, number> = { result: 224, compact: 144, menu: 376, directions: 364 }
+
+function formFor(p: {
+  state: PillState
+  vw: number
+  hover: boolean
+  busy: boolean
+  caption: string
+  booking: BookingView | null
+}): Form {
   const fit = (w: number) => Math.min(w, p.vw - 48)
   switch (p.state) {
     case 'listening': {
@@ -82,6 +99,11 @@ function formFor(p: { state: PillState; vw: number; hover: boolean; busy: boolea
     }
     case 'calling':
       return { glass: { ...BALL, width: fit(360), height: 224, radius: 36, liquid: 0, edge: 1 }, inset: 6 }
+    case 'booking':
+      return {
+        glass: { ...BALL, width: fit(424), height: BOOKING_HEIGHT[p.booking ?? 'result'], radius: 36, liquid: 0, edge: 1 },
+        inset: 6,
+      }
   }
 }
 
@@ -208,14 +230,17 @@ export function AgentPill(props: Props) {
   }, [])
 
   const form = useMemo(
-    () => formFor({ state, vw, hover: hover && state === 'listening', busy: props.busy, caption: props.caption }),
-    [state, vw, hover, props.busy, props.caption],
+    () =>
+      formFor({ state, vw, hover: hover && state === 'listening', busy: props.busy, caption: props.caption, booking: props.booking }),
+    [state, vw, hover, props.busy, props.caption, props.booking],
   )
   const box = { width: form.glass.width - form.inset * 2, height: form.glass.height - form.inset * 2 }
 
+  // Collapsing the reservation reply keeps its content; opening the menu or directions swaps it.
+  const contentKey = state === 'booking' ? `booking-${props.booking === 'compact' ? 'result' : props.booking}` : state
   useLayoutEffect(() => {
     glassRef.current?.hideContent()
-  }, [state])
+  }, [contentKey])
 
   useEffect(() => {
     glassRef.current?.setTarget(form.glass)
@@ -325,6 +350,19 @@ export function AgentPill(props: Props) {
           {state === 'calling' && props.callee && (
             <div className="pill-content pill-card" style={box}>
               <Calling callee={props.callee} onHangUp={props.onHangUp} />
+            </div>
+          )}
+
+          {state === 'booking' && props.booking && (
+            <div className="pill-content pill-card is-fluid">
+              <BookingCard
+                view={props.booking}
+                size={box}
+                onView={props.onBookingView}
+                onHold={props.onBookingHold}
+                onOrder={props.onOrder}
+                onGo={props.onGo}
+              />
             </div>
           )}
 

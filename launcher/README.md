@@ -21,6 +21,7 @@ npm run dev
 | Collaboration | A confirmation card when a running task needs your decision |
 | Caption | With the speaker off (top-right), agent replies appear as a one-line caption |
 | Phone call | The ball becomes a "Calling ..." card; once connected the call window splits off to the top-left |
+| Reservation | The ball becomes the shop agent's reservation reply, with Ordering Menu and Directions |
 
 The **Agent states** panel (bottom left) jumps to any state for demos.
 
@@ -43,3 +44,14 @@ Tell the agent to call someone: type or say `call mom`, `给妈妈打电话`, `�
 - **Hanging up**: the red button, Esc while dialing, or typing/saying `hang up` / `挂断`.
 
 Your own camera shows in the corner when the browser grants it; otherwise a still stands in. Contacts live in `src/data.ts`; an unknown name gets an initials avatar and a voice-only view. Parsing is in `src/call.ts`. Without a microphone, `?say=call%20mom` works like the referring demo above.
+
+## Reservation
+
+Book through a shop's agent: type or say `bluebird`, `蓝鸟`, `reserve`, `book a table`, `预约` or `预订`. The ball turns into Bluebird cafe's reply: "Your reserved seat for 3 p.m. has been confirmed."
+
+- **Left alone**: after 6s the Ordering Menu and Directions buttons fade and the card shrinks to just the reply; 4s later it returns to the ball. Hovering the card holds it.
+- **Ordering Menu**: the card grows into the menu; add items and pre-order them for 3 p.m.
+- **Directions**: a route map with walk / drive / bus times and a start button.
+- Back returns to the reply; Esc or a click outside closes it. Menu and directions stay until you close them.
+
+The shop, menu and routes are in `src/booking.ts`; the card is `src/components/BookingCard.tsx`.
