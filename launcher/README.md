@@ -60,7 +60,7 @@ The shop, menu and routes are in `src/booking.ts`; the card is `src/components/B
 
 ## Fridge
 
-Ask a cooking question, typed or spoken: `what can I cook tonight`, `what should I make for dinner`, `今晚做什么菜好`, `我想做提拉米苏`, `冰箱里还有什么`. As with reservations, a spoken question opens the card only after the sentence is finished.
+Ask a cooking question or say what you want to cook, typed or spoken: `I want to make tiramisu tonight`, `what can I cook tonight`, `what should I make for dinner`, `今晚做什么菜好`, `我想做提拉米苏`, `冰箱里还有什么`. Dish names (tiramisu, including recognizer spellings like "tira misu", cake, pasta, soup…) count, while "make a poster" and similar requests still run as tasks. As with reservations, a spoken question opens the card only after the sentence is finished.
 
 The ball turns into the fridge agent's confirmation card. It shows "You're almost ready to make tiramisu tonight!" with the ingredient check (eggs, cheese, sugar, coffee), the missing Mascarpone Cheese 225 g at $5.99, and two buttons:
 

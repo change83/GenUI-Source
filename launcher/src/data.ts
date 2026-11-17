@@ -100,7 +100,7 @@ export const contacts: Contact[] = [
     id: 'mom',
     name: 'Mom',
     aliases: ['mom', 'mum', 'mommy', 'mother', 'mama', 'my mom', 'my mother', '妈妈', '妈', '老妈', '母亲', '我妈', '我妈妈'],
-    avatar: '/call-mom-avatar.jpg',
+    avatar: '/call-mom-avatar.png',
     video: '/call-mom.jpg',
   },
 ]

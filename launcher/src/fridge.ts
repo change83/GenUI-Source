@@ -32,8 +32,19 @@ export const fridge = {
   ] satisfies Substitute[],
 }
 
-const COOKING =
-  /\b(cook(?:ing)?|recipes?|bake|baking|ingredients?|fridge|dinner|lunch|breakfast|dessert|tiramisu|what (?:can|should) i (?:make|eat|cook))\b|[做煮烧炒].{0,3}[菜饭]|下厨|烹饪|菜谱|食谱|烘焙|食材|冰箱|早餐|早饭|午饭|午餐|晚饭|晚餐|夜宵|甜点|甜品|提拉米苏|吃什么/i
+const DISHES =
+  'tiramisu|tira ?mi ?su|terr?a ?mi ?su|cakes?|cookies|brownies|pancakes|bread|pasta|spaghetti|pizza|soup|salad|curry|steak|noodles|dumplings|risotto|omelette|sushi'
+
+// Whole sentences about cooking ("I want to make tiramisu tonight") as well as single cue words.
+const COOKING = new RegExp(
+  [
+    `\\b(?:cook(?:ing)?|recipes?|bake|baking|ingredients?|fridge|dinner|lunch|breakfast|dessert|${DISHES})\\b`,
+    String.raw`\bwhat (?:can|should) (?:i|we) (?:make|eat|cook)\b`,
+    String.raw`[做煮烧炒].{0,3}[菜饭]|下厨|烹饪|菜谱|食谱|烘焙|食材|冰箱|早餐|早饭|午饭|午餐|晚饭|晚餐|夜宵|甜点|甜品|吃什么`,
+    String.raw`[做烤煮].{0,3}(?:提拉米苏|蛋糕|面包|饼干|面条|饺子|意面|披萨|汤|沙拉)|提拉米苏`,
+  ].join('|'),
+  'i',
+)
 
 export function isCookingQuestion(text: string) {
   return COOKING.test(text)
