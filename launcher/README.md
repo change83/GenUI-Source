@@ -9,6 +9,7 @@ npm run dev
 
 - **Pinned area** (left): widgets and pinned agent outputs. Press and drag the frosted panel to move it anywhere; hover and click **Edit** to reorder, remove or add widgets.
 - **Dynamic area** (right): unread outputs, the ongoing conversation, and suggested tasks. It stays top-aligned with the pinned area, 80px to its right, and moves with it.
+- **Task drawer** (right edge): push the pointer against the right screen edge to reveal it. **In progress** cards show the percentage, the current step ("Step 3 of 4 · Comparing specs and pricing") and a progress bar. **Completed** cards show the deliverable's thumbnail and open it on click; tasks with no deliverable state the result in text. Sample tasks are `backgroundTasks` and `finishedNotes` in `src/data.ts`.
 - **Agent ball** (bottom): a WebGL liquid-glass pane (reused from `liquid-glass.html`) that morphs between states with spring physics. Page background and glass refraction share `public/bg.jpg`.
 
 ## Agent states

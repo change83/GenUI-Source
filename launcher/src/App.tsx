@@ -20,7 +20,7 @@ import {
 import { OutputThumb } from './components/OutputThumb'
 import { PinnedArea } from './components/PinnedArea'
 import { ReferenceRipple } from './components/ReferenceRipple'
-import { TaskDrawer, type DrawerTask } from './components/TaskDrawer'
+import { TaskDrawer, type FinishedTask, type RunningTask } from './components/TaskDrawer'
 import { fallbackPlacement, measureFeed, placeFeed, type FeedSizes, type Placement } from './placement'
 import { findReferent, sameReferent, type Referent } from './reference'
 import { listenForSpeech } from './speech'
@@ -28,6 +28,7 @@ import { useTrailingCards } from './useTrailingCards'
 import {
   archivedOutputs,
   backgroundTasks,
+  finishedNotes,
   contacts,
   conversation,
   initialOutputs,
@@ -515,17 +516,19 @@ export default function App() {
     startJob(t.title, t.outputKind, { taskId: t.id })
   }
 
-  const drawerTasks: DrawerTask[] = [
-    ...(job ? [{ id: job.id, title: outputTitle(job.title), subtitle: `${step}…`, kind: job.kind, status: 'running' as const, progress: job.progress }] : []),
-    ...backgroundTasks.map((t) => ({ ...t, status: 'running' as const })),
+  const stepAt = (progress: number) => Math.min(STEPS.length - 1, Math.floor((progress / 100) * STEPS.length))
+  const runningTasks: RunningTask[] = [
+    ...(job ? [{ id: job.id, title: outputTitle(job.title), steps: STEPS, step: stepAt(job.progress), progress: job.progress }] : []),
+    ...backgroundTasks,
+  ]
+  const finishedTasks: FinishedTask[] = [
     ...[...outputs, ...archivedOutputs].map((o) => ({
       id: o.id,
       title: o.title,
-      subtitle: `${o.createdAt} · ${o.subtitle}`,
-      kind: o.kind,
-      status: 'done' as const,
-      onOpen: () => openOutput(o),
+      finishedAt: o.createdAt,
+      output: { kind: o.kind, subtitle: o.subtitle, onOpen: () => openOutput(o) },
     })),
+    ...finishedNotes,
   ]
 
   const demo: { state: PillState; label: string; run: () => void }[] = [
@@ -686,7 +689,7 @@ export default function App() {
         <CallWindow key={call.since} contact={call.contact} since={call.since} from={call.from} onHangUp={endCall} />
       )}
 
-      <TaskDrawer tasks={drawerTasks} />
+      <TaskDrawer running={runningTasks} finished={finishedTasks} />
 
       <aside className="demo-panel glass-pill" aria-label="Agent states demo">
         <span>Agent states</span>

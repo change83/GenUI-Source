@@ -105,14 +105,59 @@ export const contacts: Contact[] = [
   },
 ]
 
+export interface BackgroundTask {
+  id: string
+  title: string
+  steps: string[]
+  /** Index into steps of the step being worked on. */
+  step: number
+  progress: number
+}
+
 /** Background work the agent already has going, shown in the edge task drawer. */
-export const backgroundTasks: { id: string; title: string; subtitle: string; kind: OutputKind; progress: number }[] = [
+export const backgroundTasks: BackgroundTask[] = [
   {
     id: 'bg-product-hunt',
-    title: 'Product Hunt',
-    subtitle: '5 of the latest electronic products analysis',
-    kind: 'report',
+    title: 'Product Hunt: 5 latest electronic products',
+    steps: ['Collecting launches', 'Reading user reviews', 'Comparing specs and pricing', 'Writing the summary'],
+    step: 2,
     progress: 64,
+  },
+  {
+    id: 'bg-sales',
+    title: 'Weekly sales dashboard',
+    steps: ['Pulling CRM data', 'Cleaning duplicate deals', 'Building charts'],
+    step: 1,
+    progress: 38,
+  },
+  {
+    id: 'bg-translate',
+    title: 'Translate the headset PRD into Japanese',
+    steps: ['Extracting terms', 'Translating sections', 'Reviewing terminology'],
+    step: 1,
+    progress: 22,
+  },
+]
+
+/** Finished work with nothing to open: the drawer states what was done. */
+export const finishedNotes: { id: string; title: string; result: string; finishedAt: string }[] = [
+  {
+    id: 'n-meeting',
+    title: 'Schedule the design review',
+    result: 'Booked Room 4B for Thursday 2–3 p.m. and sent invites to 6 people; 5 accepted.',
+    finishedAt: '1 h ago',
+  },
+  {
+    id: 'n-inbox',
+    title: 'Clean up the inbox',
+    result: 'Archived 42 newsletters and flagged 3 emails from suppliers that need a reply today.',
+    finishedAt: '3 h ago',
+  },
+  {
+    id: 'n-flight',
+    title: 'Check in for the Tokyo flight',
+    result: 'Checked in for NH 920 on Friday, seat 23A. The boarding pass is in your wallet.',
+    finishedAt: 'Yesterday',
   },
 ]
 
